@@ -5,13 +5,11 @@ import com.lehaine.littlekt.graphics.Color
 import com.lehaine.littlekt.graphics.OrthographicCamera
 import com.lehaine.littlekt.graphics.SpriteBatch
 import com.lehaine.littlekt.graphics.font.GpuFont
-import com.lehaine.littlekt.graphics.font.TtfFont
 import com.lehaine.littlekt.graphics.font.use
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkEntity
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkLevel
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkTileMap
 import com.lehaine.littlekt.graphics.use
-import com.lehaine.littlekt.log.Logger
 import com.lehaine.littlekt.samples.common.GameScene
 import com.lehaine.littlekt.util.viewport.FitViewport
 import kotlin.time.Duration
@@ -20,21 +18,17 @@ import kotlin.time.Duration
  * @author Colton Daily
  * @date 12/24/2021
  */
-class PlatformerSampleScene(context: Context) : GameScene(context) {
+class PlatformerSampleScene(
+    val batch: SpriteBatch,
+    val gpuFontRenderer: GpuFont,
+    context: Context
+) :  GameScene(context) {
 
     private val world: LDtkTileMap by load(resourcesVfs["platformer.ldtk"])
     private val level: LDtkLevel by prepare { world.levels[0] }
     private val diamonds: List<LDtkEntity> by prepare { level.entities("Diamond") }
-    private val batch = SpriteBatch(this)
-    private val pixelFont: TtfFont by load(resourcesVfs["m5x7.ttf"])
-    private val gpuFontRenderer by prepare { GpuFont(this, pixelFont) }
     private val camera = OrthographicCamera(graphics.width, graphics.height).apply {
         viewport = FitViewport(480, 270)
-    }
-
-    init {
-        Logger.defaultLevel = Logger.Level.DEBUG
-        logger.level = Logger.Level.DEBUG
     }
 
     override fun create() {
