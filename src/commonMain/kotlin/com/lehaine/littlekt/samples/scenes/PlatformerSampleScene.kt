@@ -1,7 +1,6 @@
-package com.lehaine.littlekt.samples
+package com.lehaine.littlekt.samples.scenes
 
 import com.lehaine.littlekt.Context
-import com.lehaine.littlekt.ContextScene
 import com.lehaine.littlekt.graphics.Color
 import com.lehaine.littlekt.graphics.OrthographicCamera
 import com.lehaine.littlekt.graphics.SpriteBatch
@@ -13,6 +12,7 @@ import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkLevel
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkTileMap
 import com.lehaine.littlekt.graphics.use
 import com.lehaine.littlekt.log.Logger
+import com.lehaine.littlekt.samples.common.GameScene
 import com.lehaine.littlekt.util.viewport.FitViewport
 import kotlin.time.Duration
 
@@ -20,7 +20,7 @@ import kotlin.time.Duration
  * @author Colton Daily
  * @date 12/24/2021
  */
-class PlatformerSample(context: Context) : ContextScene(context) {
+class PlatformerSampleScene(context: Context) : GameScene(context) {
 
     private val world: LDtkTileMap by load(resourcesVfs["platformer.ldtk"])
     private val level: LDtkLevel by prepare { world.levels[0] }
@@ -37,11 +37,11 @@ class PlatformerSample(context: Context) : ContextScene(context) {
         logger.level = Logger.Level.DEBUG
     }
 
-    override fun prepare() {
+    override fun create() {
         camera.translate(level.pxWidth / 2f, level.pxHeight / 2f, 0f)
     }
 
-    override fun update(dt: Duration) {
+    override fun render(dt: Duration) {
         camera.update()
         batch.use(camera.viewProjection) {
             level.render(it, camera)
