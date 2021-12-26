@@ -13,6 +13,6 @@ fun main(args: Array<String>) {
         vSync = true
         title = "LittleKt - Samples"
     }.start {
-        SampleManagerScene(it)
+        PlatformerSample(it)
     }
 }

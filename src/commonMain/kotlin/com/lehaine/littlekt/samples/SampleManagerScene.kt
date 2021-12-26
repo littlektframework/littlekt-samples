@@ -8,4 +8,6 @@ import com.lehaine.littlekt.ContextScene
  * @date 12/24/2021
  */
 class SampleManagerScene(context: Context) : ContextScene(context) {
+
+
 }
