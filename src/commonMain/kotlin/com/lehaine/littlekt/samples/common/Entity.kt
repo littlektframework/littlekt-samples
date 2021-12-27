@@ -105,9 +105,9 @@ open class Entity(val gridCellSize: Int) {
      */
     var fixedProgressionRatio: Float = 1f
 
-
     val cooldown = CooldownComponent()
 
+    var onDestroy: (Entity) -> Unit = {}
     var destroyed = false
         protected set
 
@@ -128,6 +128,7 @@ open class Entity(val gridCellSize: Int) {
 
     open fun destroy() {
         if (destroyed) return
+        onDestroy.invoke(this)
     }
 
 

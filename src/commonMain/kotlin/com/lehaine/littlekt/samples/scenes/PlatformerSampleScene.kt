@@ -10,6 +10,7 @@ import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkTileMap
 import com.lehaine.littlekt.input.Input
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.samples.common.*
+import com.lehaine.littlekt.util.fastForEach
 import com.lehaine.littlekt.util.viewport.ExtendViewport
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -34,9 +35,10 @@ class PlatformerSampleScene(
             atlas,
             level,
             input
-        ).also { entities += it }
+        ).also {
+            it.onDestroy = ::removeEntity
+        }
     }
-    private val diamonds: List<LDtkEntity> by prepare { ldtkLevel.entities("Diamond") }
 
     private val camera = GameCamera(virtualWidth = graphics.width, virtualHeight = graphics.height).apply {
         viewport = ExtendViewport(480, 270)
@@ -44,20 +46,26 @@ class PlatformerSampleScene(
     private val uiCam = OrthographicCamera(graphics.width, graphics.height).apply {
         viewport = ExtendViewport(480, 270)
     }
-
+    private val gameOver get() = Diamond.ALL.size == 0
     private var fixedProgressionRatio = 1f
 
     override fun create() {
-        camera.viewBounds.width = ldtkLevel.pxWidth.toFloat()
-        camera.viewBounds.height = ldtkLevel.pxHeight.toFloat()
-        camera.follow(hero, true)
+        initLevel()
 
         addTmodUpdater(60) { dt, tmod ->
-            entities.forEach {
+            if (input.isKeyJustPressed(Key.R) && gameOver) {
+                entities.fastForEach {
+                    it.destroy()
+                }
+                entities.clear()
+                initLevel()
+            }
+            entities.fastForEach {
                 it.fixedProgressionRatio = fixedProgressionRatio
                 it.update(dt)
             }
-            entities.forEach {
+
+            entities.fastForEach {
                 it.postUpdate(dt)
             }
 
@@ -65,20 +73,47 @@ class PlatformerSampleScene(
             camera.viewport.apply(this)
             batch.use(camera.viewProjection) {
                 ldtkLevel.render(it, camera)
+                entities.fastForEach { entity ->
+                    if (entity is Renderable) {
+                        entity.render(it)
+                    }
+                }
                 hero.render(it)
             }
             uiCam.update()
             uiCam.viewport.apply(this)
             gpuFontRenderer.use(uiCam.viewProjection) {
-                it.drawText("Diamonds left: ${diamonds.size}", 10f, 25f, 36, color = Color.WHITE)
+                if (gameOver) {
+                    it.drawText("You Win!\nR to Restart", 200f, 135f, 36, color = Color.WHITE)
+                } else {
+                    it.drawText("Diamonds left: ${Diamond.ALL.size}", 10f, 25f, 36, color = Color.WHITE)
+                }
             }
         }
 
         addFixedInterpUpdater(
             30f,
             interpolate = { ratio -> fixedProgressionRatio = ratio },
-            updatable = { entities.forEach { it.fixedUpdate() } }
+            updatable = { entities.fastForEach { it.fixedUpdate() } }
         )
+    }
+
+    private fun initLevel() {
+        hero.setFromLevelEntity(ldtkLevel.entities("Player")[0])
+        entities += hero
+        ldtkLevel.entities("Diamond").forEach { ldtkEntity ->
+            entities += Diamond(ldtkEntity, atlas, level, hero).also {
+                entities += it
+                it.onDestroy = ::removeEntity
+            }
+        }
+        camera.viewBounds.width = ldtkLevel.pxWidth.toFloat()
+        camera.viewBounds.height = ldtkLevel.pxHeight.toFloat()
+        camera.follow(hero, true)
+    }
+
+    private fun removeEntity(entity: Entity) {
+        entities.remove(entity)
     }
 
     override fun resize(width: Int, height: Int) {
@@ -154,12 +189,7 @@ class Hero(
     init {
         width = 8f
         height = 8f
-        cx = data.cx
-        cy = data.cy
-        xr = data.pivotX
-        yr = data.pivotY
-        anchorX = data.pivotX
-        anchorY = data.pivotY
+        setFromLevelEntity(data)
     }
 
     fun render(batch: SpriteBatch) {
@@ -211,5 +241,48 @@ class Hero(
 
     companion object {
         private const val ON_GROUND_RECENTLY = "onGroundRecently"
+    }
+}
+
+class Diamond(
+    data: LDtkEntity,
+    val atlas: TextureAtlas,
+    level: PlatformerLevel,
+    val hero: Hero
+) :
+    LevelEntity(level, level.gridSize),
+    Renderable {
+    val sprite = atlas["diamond0.png"].slice
+
+    init {
+        setFromLevelEntity(data)
+        ALL += this
+    }
+
+    override fun render(batch: SpriteBatch) {
+        batch.draw(
+            slice = sprite,
+            x = px,
+            y = py,
+            originX = sprite.width * anchorX,
+            originY = sprite.height * anchorY,
+            scaleX = scaleX,
+            scaleY = scaleY
+        )
+    }
+
+    override fun update(dt: Duration) {
+        if (hero.isCollidingWith(this)) {
+            destroy()
+        }
+    }
+
+    override fun destroy() {
+        super.destroy()
+        ALL.remove(this)
+    }
+
+    companion object {
+        val ALL = mutableListOf<Diamond>()
     }
 }

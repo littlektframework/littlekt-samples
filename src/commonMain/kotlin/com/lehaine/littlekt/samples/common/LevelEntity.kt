@@ -1,5 +1,6 @@
 package com.lehaine.littlekt.samples.common
 
+import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkEntity
 import kotlin.math.floor
 
 /**
@@ -15,6 +16,15 @@ open class LevelEntity(
     var bottomCollisionRatio: Float = 1f
     var topCollisionRatio: Float = 1f
     var useTopCollisionRatio: Boolean = false
+
+    fun setFromLevelEntity(data: LDtkEntity) {
+        cx = data.cx
+        cy = data.cy
+        xr = data.pivotX
+        yr = data.pivotY
+        anchorX = data.pivotX
+        anchorY = data.pivotY
+    }
 
     override fun checkXCollision() {
         if (level.hasCollision(cx + 1, cy) && xr >= rightCollisionRatio) {
