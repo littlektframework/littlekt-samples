@@ -3,6 +3,7 @@ package com.lehaine.littlekt.samples.common
 import com.lehaine.littlekt.math.castRay
 import com.lehaine.littlekt.math.dist
 import kotlin.math.atan2
+import kotlin.time.Duration
 
 /**
  * @author Colton Daily
@@ -44,3 +45,11 @@ fun Entity.distPxTo(targetGridPosition: Entity) = distPxTo(targetGridPosition.px
 
 fun Entity.angleTo(x: Float, y: Float) = atan2(y - py, x - px)
 fun Entity.angleTo(target: Entity) = angleTo(target.centerX, target.centerY)
+
+val Entity.cd get() = this.cooldown
+
+fun Entity.cooldown(name: String, time: Duration, callback: () -> Unit = {}) =
+    this.cooldown.timeout(name, time, callback)
+
+fun Entity.cd(name: String, time: Duration, callback: () -> Unit = {}) =
+    cooldown(name, time, callback)

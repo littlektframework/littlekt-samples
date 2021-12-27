@@ -19,6 +19,13 @@ open class GameScene(context: Context) : Scene(context) {
 }
 
 fun <T : GameScene> T.addFixedInterpUpdater(
+    timesPerSecond: Float,
+    initial: Boolean = true,
+    interpolate: (ratio: Float) -> Unit,
+    updatable: Scene.() -> Unit
+) = (this as Scene).addFixedInterpUpdater(timesPerSecond, initial, interpolate, updatable).also { updateComponents += it }
+
+fun <T : GameScene> T.addFixedInterpUpdater(
     time: Duration,
     initial: Boolean = true,
     interpolate: (ratio: Float) -> Unit,

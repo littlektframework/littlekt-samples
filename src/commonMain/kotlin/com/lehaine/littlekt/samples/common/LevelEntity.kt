@@ -15,19 +15,18 @@ open class LevelEntity(
     var bottomCollisionRatio: Float = 1f
     var topCollisionRatio: Float = 1f
     var useTopCollisionRatio: Boolean = false
-    var onLevelCollision: ((xDir: Int, yDir: Int) -> Unit)? = null
 
     override fun checkXCollision() {
         if (level.hasCollision(cx + 1, cy) && xr >= rightCollisionRatio) {
             xr = rightCollisionRatio
             velocityX *= 0.5f
-            onLevelCollision?.invoke(1, 0)
+            onLevelCollision(1, 0)
         }
 
         if (level.hasCollision(cx - 1, cy) && xr <= leftCollisionRatio) {
             xr = leftCollisionRatio
             velocityX *= 0.5f
-            onLevelCollision?.invoke(-1, 0)
+            onLevelCollision(-1, 0)
         }
     }
 
@@ -36,12 +35,14 @@ open class LevelEntity(
         if (level.hasCollision(cx, cy - 1) && yr <= heightCoordDiff) {
             yr = heightCoordDiff
             velocityY = 0f
-            onLevelCollision?.invoke(0, -1)
+            onLevelCollision(0, -1)
         }
         if (level.hasCollision(cx, cy + 1) && yr >= bottomCollisionRatio) {
             velocityY = 0f
             yr = bottomCollisionRatio
-            onLevelCollision?.invoke(0, 1)
+            onLevelCollision(0, 1)
         }
     }
+
+    open fun onLevelCollision(xDir: Int, yDir: Int) = Unit
 }

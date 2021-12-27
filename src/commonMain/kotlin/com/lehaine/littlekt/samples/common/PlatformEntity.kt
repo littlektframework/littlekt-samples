@@ -11,11 +11,13 @@ open class PlatformEntity(level: GameLevel<*>, gridCellSize: Int) : LevelEntity(
             cy + 1
         ) && yr == bottomCollisionRatio
 
-    var hasGravity: Boolean = false
-
+    var hasGravity: Boolean = true
 
     private val gravityPulling get() = !onGround && hasGravity
 
+    init {
+        gravityY = 0.05f
+    }
 
     override fun calculateDeltaYGravity(): Float {
         return if (gravityPulling) {

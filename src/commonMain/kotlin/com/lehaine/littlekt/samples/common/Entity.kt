@@ -1,11 +1,13 @@
 package com.lehaine.littlekt.samples.common
 
 import com.lehaine.littlekt.math.interpolate
+import com.lehaine.littlekt.util.seconds
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.time.Duration
+import kotlin.time.DurationUnit
 
 /**
  * @author Colton Daily
@@ -35,7 +37,7 @@ open class Entity(val gridCellSize: Int) {
     val innerRadius get() = min(width, height) * 0.5
     val outerRadius get() = max(width, height) * 0.5
 
-    var interpolatePixelPosition: Boolean = false
+    var interpolatePixelPosition: Boolean = true
     var lastPx: Float = 0f
     var lastPy: Float = 0f
 
@@ -55,6 +57,15 @@ open class Entity(val gridCellSize: Int) {
             _stretchY = value
         }
 
+    /**
+     * Extra scaling that is used to calculate [scaleX]
+     */
+    var extraScaleX = 1f
+
+    /**
+     * Extra scaling that is used to calculate [scaleY].
+     */
+    var extraScaleY = 1f
     var scaleX = 1f
     var scaleY = 1f
 
@@ -88,24 +99,66 @@ open class Entity(val gridCellSize: Int) {
     val bottom get() = attachY + (1 - anchorY) * height
     val left get() = attachX - anchorX * width
 
+    /**
+     * The ratio to interpolate the last position to the new position.
+     * This will need updated before each update. Usually used with [addFixedInterpUpdater].
+     * @see [addFixedInterpUpdater]
+     */
     var fixedProgressionRatio: Float = 1f
 
-    var preXCheck: (() -> Unit)? = null
-    var preYCheck: (() -> Unit)? = null
+
+    val cooldown = CooldownComponent()
 
     var destroyed = false
         protected set
 
-    open fun update(dt: Duration) = Unit
+    open fun update(dt: Duration) {
+        cooldown.update(dt)
+    }
+
     open fun fixedUpdate() {
         updateGridPosition()
     }
 
-    open fun postUpdate(dt: Duration) = Unit
+    open fun postUpdate(dt: Duration) {
+        scaleX = extraScaleX * dir * stretchX
+        scaleY = extraScaleY * stretchY
+        _stretchX += (1 - _stretchX) * min(1f, restoreSpeed * dt.seconds)
+        _stretchY += (1 - _stretchY) * min(1f, restoreSpeed * dt.seconds)
+    }
 
     open fun destroy() {
         if (destroyed) return
     }
+
+
+    /**
+     * AABB check
+     */
+    fun isCollidingWith(from: Entity): Boolean {
+        val lx = left
+        val lx2 = from.left
+        val rx = right
+        val rx2 = from.right
+
+        if (lx >= rx2 || lx2 >= rx) {
+            return false
+        }
+
+        val ly = top
+        val ry = bottom
+        val ly2 = from.top
+        val ry2 = from.bottom
+
+        if (ly >= ry2 || ly2 >= ry) {
+            return false
+        }
+
+        return true
+    }
+
+    fun isCollidingWithInnerCircle(from: Entity) = distPxTo(from) <= innerRadius
+    fun isCollidingWithOuterCircle(from: Entity) = distPxTo(from) <= outerRadius
 
     fun onPositionManuallyChanged() {
         lastPx = attachX
@@ -131,7 +184,7 @@ open class Entity(val gridCellSize: Int) {
                 xr += stepX
 
                 if (velocityX != 0f) {
-                    preXCheck?.invoke()
+                    preXCheck()
                     checkXCollision()
                 }
 
@@ -146,9 +199,8 @@ open class Entity(val gridCellSize: Int) {
 
                 yr += stepY
 
-
                 if (velocityY != 0f) {
-                    preYCheck?.invoke()
+                    preYCheck()
                     checkYCollision()
                 }
 
@@ -184,6 +236,9 @@ open class Entity(val gridCellSize: Int) {
         return 0f
     }
 
-    open fun checkXCollision() {}
-    open fun checkYCollision() {}
+    open fun preXCheck() = Unit
+    open fun preYCheck() = Unit
+
+    open fun checkXCollision() = Unit
+    open fun checkYCollision() = Unit
 }

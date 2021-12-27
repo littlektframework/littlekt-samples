@@ -7,8 +7,12 @@ import com.lehaine.littlekt.graphics.font.use
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkEntity
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkLevel
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkTileMap
+import com.lehaine.littlekt.input.Input
+import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.samples.common.*
 import com.lehaine.littlekt.util.viewport.FitViewport
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * @author Colton Daily
@@ -24,7 +28,14 @@ class PlatformerSampleScene(
     private val world: LDtkTileMap by load(resourcesVfs["platformer.ldtk"])
     private val ldtkLevel: LDtkLevel by prepare { world.levels[0] }
     private val level: PlatformerLevel by prepare { PlatformerLevel(ldtkLevel) }
-    private val hero: Hero by prepare { Hero(ldtkLevel.entities("Player")[0], atlas, level) }
+    private val hero: Hero by prepare {
+        Hero(
+            ldtkLevel.entities("Player")[0],
+            atlas,
+            level,
+            input
+        ).also { entities += it }
+    }
     private val diamonds: List<LDtkEntity> by prepare { ldtkLevel.entities("Diamond") }
 
     private val camera = OrthographicCamera(graphics.width, graphics.height).apply {
@@ -38,6 +49,7 @@ class PlatformerSampleScene(
 
         addTmodUpdater(60) { dt, tmod ->
             entities.forEach {
+                it.fixedProgressionRatio = fixedProgressionRatio
                 it.update(dt)
             }
             entities.forEach {
@@ -121,17 +133,74 @@ class PlatformerLevel(level: LDtkLevel) : LDtkGameLevel<PlatformerLevel.LevelMar
 class Hero(
     data: LDtkEntity,
     private val atlas: TextureAtlas,
-    override val level: PlatformerLevel
-) :
-    PlatformEntity(level, level.gridSize) {
+    override val level: PlatformerLevel,
+    val input: Input
+) : PlatformEntity(level, level.gridSize) {
     val sprite: TextureSlice = atlas["heroIdle0.png"].slice
 
-    var x: Float = data.x
-    var y: Float = data.y
-    var pivotX = data.pivotX
-    var pivotY = data.pivotY
+    private val speed = 0.08f
+    private var moveDir = 0f
+    private val jumpHeight = -0.65f
+
+    init {
+        width = 8f
+        height = 8f
+        cx = data.cx
+        cy = data.cy
+        xr = data.pivotX
+        yr = data.pivotY
+        anchorX = data.pivotX
+        anchorY = data.pivotY
+    }
 
     fun render(batch: SpriteBatch) {
-        batch.draw(sprite, x, y, sprite.width * pivotX, sprite.height * pivotY)
+        batch.draw(
+            slice = sprite,
+            x = px,
+            y = py,
+            originX = sprite.width * anchorX,
+            originY = sprite.height * anchorY,
+            scaleX = scaleX,
+            scaleY = scaleY
+        )
+    }
+
+    override fun update(dt: Duration) {
+        super.update(dt)
+        moveDir = 0f
+
+        if (onGround) {
+            cd(ON_GROUND_RECENTLY, 150.milliseconds)
+        }
+
+        run()
+        jump()
+    }
+
+    override fun fixedUpdate() {
+        super.fixedUpdate()
+        if (moveDir != 0f) {
+            velocityX += moveDir * speed
+        } else {
+            velocityX *= 0.3f
+        }
+    }
+
+    private fun run() {
+        if (input.isKeyPressed(Key.A) || input.isKeyPressed(Key.D)) {
+            dir = if (input.isKeyPressed(Key.D)) 1 else -1
+            moveDir = dir.toFloat()
+        }
+    }
+
+    private fun jump() {
+        if (input.isKeyJustPressed(Key.SPACE) && cd.has(ON_GROUND_RECENTLY)) {
+            velocityY = jumpHeight
+            stretchX = 0.7f
+        }
+    }
+
+    companion object {
+        private const val ON_GROUND_RECENTLY = "onGroundRecently"
     }
 }

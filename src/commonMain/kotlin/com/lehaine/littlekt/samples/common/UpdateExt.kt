@@ -1,6 +1,8 @@
 package com.lehaine.littlekt.samples.common
 
 import com.lehaine.littlekt.Scene
+import com.lehaine.littlekt.util.milliseconds
+import com.lehaine.littlekt.util.seconds
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -20,7 +22,7 @@ fun <T : Scene> T.addFixedInterpUpdater(
     interpolate: (ratio: Float) -> Unit,
     updatable: T.() -> Unit
 ): UpdateComponent = addFixedInterpUpdater(
-    (timesPerSecond / timesPerSecond).toDouble().seconds,
+    (1f / timesPerSecond).toDouble().seconds,
     initial,
     interpolate,
     updatable
@@ -41,7 +43,7 @@ fun <T : Scene> T.addFixedInterpUpdater(
                 updatable(this@addFixedInterpUpdater)
             }
 
-            interpolate(accum.inWholeMilliseconds.toFloat() / time.inWholeMilliseconds.toFloat())
+            interpolate(accum.milliseconds / time.milliseconds)
         }
     }
     if (initial) {
@@ -53,7 +55,7 @@ fun <T : Scene> T.addFixedInterpUpdater(
 fun <T : Scene> T.addTmodUpdater(targetFPS: Int, updatable: T.(dt: Duration, tmod: Float) -> Unit): UpdateComponent {
     val component = object : UpdateComponent {
         override fun update(dt: Duration) {
-            updatable(this@addTmodUpdater, dt, dt.inWholeSeconds.toFloat() * targetFPS)
+            updatable(this@addTmodUpdater, dt, dt.seconds * targetFPS)
         }
     }
     component.update(0.0.seconds)

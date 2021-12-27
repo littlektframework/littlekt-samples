@@ -18,7 +18,6 @@ abstract class LDtkGameLevel<LevelMark>(var level: LDtkLevel) : GameLevel<LevelM
     protected val collisionLayers = intArrayOf(1)
     protected val collisionLayer = level["Collisions"] as LDtkIntGridLayer
 
-
     override fun isValid(cx: Int, cy: Int) = collisionLayer.isCoordValid(cx, cy)
     override fun getCoordId(cx: Int, cy: Int) = collisionLayer.getCoordId(cx, cy)
 
