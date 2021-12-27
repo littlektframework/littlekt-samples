@@ -5,9 +5,11 @@ import com.lehaine.littlekt.Game
 import com.lehaine.littlekt.graphics.SpriteBatch
 import com.lehaine.littlekt.graphics.font.GpuFont
 import com.lehaine.littlekt.graphics.font.TtfFont
+import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.log.Logger
 import com.lehaine.littlekt.samples.common.GameScene
 import com.lehaine.littlekt.samples.scenes.PlatformerSampleScene
+import kotlin.time.Duration
 
 /**
  * @author Colton Daily
@@ -27,5 +29,15 @@ class SampleGame(context: Context) : Game<GameScene>(context) {
     override fun create() {
         addScene(PlatformerSampleScene(batch, gpuFontRenderer, context))
         setScene<PlatformerSampleScene>()
+    }
+
+    override fun update(dt: Duration) {
+        if (input.isKeyJustPressed(Key.ESCAPE)) {
+            close()
+        }
+    }
+
+    override fun dispose() {
+        batch.dispose()
     }
 }

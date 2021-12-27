@@ -1,6 +1,7 @@
 package com.lehaine.littlekt.samples.scenes
 
 import com.lehaine.littlekt.Context
+import com.lehaine.littlekt.audio.AudioClip
 import com.lehaine.littlekt.graphics.*
 import com.lehaine.littlekt.graphics.font.GpuFont
 import com.lehaine.littlekt.graphics.font.use
@@ -26,12 +27,20 @@ class PlatformerSampleScene(
 ) : GameScene(context) {
     private val entities = mutableListOf<Entity>()
     private val atlas: TextureAtlas by load(resourcesVfs["tiles.atlas.json"])
+
+    private val sfxFootstep: AudioClip by load(resourcesVfs["sfx/footstep0.wav"])
+    private val sfxLand: AudioClip by load(resourcesVfs["sfx/land0.wav"])
+    private val sfxPickup: AudioClip by load(resourcesVfs["sfx/pickup0.wav"])
+
     private val world: LDtkTileMap by load(resourcesVfs["platformer.ldtk"])
     private val ldtkLevel: LDtkLevel by prepare { world.levels[0] }
     private val level: PlatformerLevel by prepare { PlatformerLevel(ldtkLevel) }
+
     private val hero: Hero by prepare {
         Hero(
             ldtkLevel.entities("Player")[0],
+            sfxFootstep,
+            sfxLand,
             atlas,
             level,
             input
@@ -102,7 +111,7 @@ class PlatformerSampleScene(
         hero.setFromLevelEntity(ldtkLevel.entities("Player")[0])
         entities += hero
         ldtkLevel.entities("Diamond").forEach { ldtkEntity ->
-            entities += Diamond(ldtkEntity, atlas, level, hero).also {
+            entities += Diamond(ldtkEntity, sfxPickup, atlas, level, hero).also {
                 entities += it
                 it.onDestroy = ::removeEntity
             }
@@ -123,6 +132,12 @@ class PlatformerSampleScene(
 
     override fun dispose() {
         world.dispose()
+        atlas.entries.forEach {
+            it.texture.dispose()
+        }
+        sfxFootstep.dispose()
+        sfxLand.dispose()
+        sfxPickup.dispose()
     }
 }
 
@@ -176,6 +191,8 @@ class PlatformerLevel(level: LDtkLevel) : LDtkGameLevel<PlatformerLevel.LevelMar
 
 class Hero(
     data: LDtkEntity,
+    private val sfxFootstep: AudioClip,
+    private val sfxLand: AudioClip,
     private val atlas: TextureAtlas,
     override val level: PlatformerLevel,
     val input: Input
@@ -185,6 +202,7 @@ class Hero(
     private val speed = 0.08f
     private var moveDir = 0f
     private val jumpHeight = -0.95f
+    private var lastHeight = py
 
     init {
         width = 8f
@@ -210,6 +228,14 @@ class Hero(
 
         if (onGround) {
             cd(ON_GROUND_RECENTLY, 150.milliseconds)
+            if (lastHeight - py > 25) {
+                sfxLand.play()
+            }
+            lastHeight = py
+        } else {
+            if (velocityY < 0) {
+                lastHeight = py
+            }
         }
 
         run()
@@ -227,6 +253,10 @@ class Hero(
 
     private fun run() {
         if (input.isKeyPressed(Key.A) || input.isKeyPressed(Key.D)) {
+            if (onGround && !cd.has(FOOTSTEP)) {
+                sfxFootstep.play(0.30f)
+                cd.timeout(FOOTSTEP, 350.milliseconds)
+            }
             dir = if (input.isKeyPressed(Key.D)) 1 else -1
             moveDir = dir.toFloat()
         }
@@ -241,16 +271,17 @@ class Hero(
 
     companion object {
         private const val ON_GROUND_RECENTLY = "onGroundRecently"
+        private const val FOOTSTEP = "footstep"
     }
 }
 
 class Diamond(
     data: LDtkEntity,
-    val atlas: TextureAtlas,
+    private val sfxPickup: AudioClip,
+    private val atlas: TextureAtlas,
     level: PlatformerLevel,
-    val hero: Hero
-) :
-    LevelEntity(level, level.gridSize),
+    private val hero: Hero
+) : LevelEntity(level, level.gridSize),
     Renderable {
     val sprite = atlas["diamond0.png"].slice
 
@@ -273,6 +304,7 @@ class Diamond(
 
     override fun update(dt: Duration) {
         if (hero.isCollidingWith(this)) {
+            sfxPickup.play()
             destroy()
         }
     }
