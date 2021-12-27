@@ -38,7 +38,7 @@ class PlatformerSampleScene(
     }
     private val diamonds: List<LDtkEntity> by prepare { ldtkLevel.entities("Diamond") }
 
-    private val camera = OrthographicCamera(graphics.width, graphics.height).apply {
+    private val camera = GameCamera(virtualWidth = graphics.width, virtualHeight = graphics.height).apply {
         viewport = ExtendViewport(480, 270)
     }
     private val uiCam = OrthographicCamera(graphics.width, graphics.height).apply {
@@ -48,7 +48,9 @@ class PlatformerSampleScene(
     private var fixedProgressionRatio = 1f
 
     override fun create() {
-        camera.position.set(ldtkLevel.pxWidth / 2f, ldtkLevel.pxHeight / 2f, 0f)
+        camera.viewBounds.width = ldtkLevel.pxWidth.toFloat()
+        camera.viewBounds.height = ldtkLevel.pxHeight.toFloat()
+        camera.follow(hero, true)
 
         addTmodUpdater(60) { dt, tmod ->
             entities.forEach {
@@ -59,7 +61,7 @@ class PlatformerSampleScene(
                 it.postUpdate(dt)
             }
 
-            camera.update()
+            camera.update(dt)
             camera.viewport.apply(this)
             batch.use(camera.viewProjection) {
                 ldtkLevel.render(it, camera)
@@ -147,7 +149,7 @@ class Hero(
 
     private val speed = 0.08f
     private var moveDir = 0f
-    private val jumpHeight = -0.65f
+    private val jumpHeight = -0.95f
 
     init {
         width = 8f
