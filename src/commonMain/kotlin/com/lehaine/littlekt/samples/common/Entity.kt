@@ -7,7 +7,6 @@ import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.time.Duration
-import kotlin.time.DurationUnit
 
 /**
  * @author Colton Daily
@@ -176,12 +175,11 @@ open class Entity(val gridCellSize: Int) {
          * Any movement greater than [maxGridMovementPercent] will increase the number of steps here.
          * The steps will break down the movement into smaller iterators to avoid jumping over grid collisions
          */
-        var steps = ceil(abs(velocityX) + abs(velocityY) / maxGridMovementPercent)
+        val steps = ceil(abs(velocityX) + abs(velocityY) / maxGridMovementPercent)
         if (steps > 0) {
-            val stepX = velocityX / steps
-            val stepY = velocityY / steps
-            while (steps > 0) {
-                xr += stepX
+            var i = 0
+            while (i < steps) {
+                xr += velocityX / steps
 
                 if (velocityX != 0f) {
                     preXCheck()
@@ -197,7 +195,7 @@ open class Entity(val gridCellSize: Int) {
                     cx--
                 }
 
-                yr += stepY
+                yr += velocityY / steps
 
                 if (velocityY != 0f) {
                     preYCheck()
@@ -213,8 +211,7 @@ open class Entity(val gridCellSize: Int) {
                     yr++
                     cy--
                 }
-
-                steps--
+                i++
             }
         }
         velocityX *= frictionX
