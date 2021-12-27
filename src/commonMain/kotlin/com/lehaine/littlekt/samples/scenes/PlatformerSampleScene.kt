@@ -10,7 +10,7 @@ import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkTileMap
 import com.lehaine.littlekt.input.Input
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.samples.common.*
-import com.lehaine.littlekt.util.viewport.FitViewport
+import com.lehaine.littlekt.util.viewport.ExtendViewport
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -39,13 +39,16 @@ class PlatformerSampleScene(
     private val diamonds: List<LDtkEntity> by prepare { ldtkLevel.entities("Diamond") }
 
     private val camera = OrthographicCamera(graphics.width, graphics.height).apply {
-        viewport = FitViewport(480, 270)
+        viewport = ExtendViewport(480, 270)
+    }
+    private val uiCam = OrthographicCamera(graphics.width, graphics.height).apply {
+        viewport = ExtendViewport(480, 270)
     }
 
     private var fixedProgressionRatio = 1f
 
     override fun create() {
-        camera.translate(ldtkLevel.pxWidth / 2f, ldtkLevel.pxHeight / 2f, 0f)
+        camera.position.set(ldtkLevel.pxWidth / 2f, ldtkLevel.pxHeight / 2f, 0f)
 
         addTmodUpdater(60) { dt, tmod ->
             entities.forEach {
@@ -57,12 +60,15 @@ class PlatformerSampleScene(
             }
 
             camera.update()
+            camera.viewport.apply(this)
             batch.use(camera.viewProjection) {
                 ldtkLevel.render(it, camera)
                 hero.render(it)
             }
-            gpuFontRenderer.use(camera.viewProjection) {
-                it.drawText("Diamonds left: ${diamonds.size}", 10f, 10f, 36, color = Color.WHITE)
+            uiCam.update()
+            uiCam.viewport.apply(this)
+            gpuFontRenderer.use(uiCam.viewProjection) {
+                it.drawText("Diamonds left: ${diamonds.size}", 10f, 25f, 36, color = Color.WHITE)
             }
         }
 
@@ -74,7 +80,8 @@ class PlatformerSampleScene(
     }
 
     override fun resize(width: Int, height: Int) {
-        camera.viewport.update(width, height, this)
+        camera.update(width, height, this)
+        uiCam.update(width, height, this)
     }
 
     override fun dispose() {
