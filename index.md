@@ -1,4 +1,4 @@
-## Little Kt - Samples
+## LittleKt - Samples
 
 A few simple samples to show off various features of [LittKt](https://github.com/LittleKtOrg/LittleKt).
 
