@@ -5,6 +5,7 @@ import com.lehaine.littlekt.math.Rect
 import com.lehaine.littlekt.math.clamp
 import com.lehaine.littlekt.math.dist
 import com.lehaine.littlekt.math.interpolate
+import kotlin.math.roundToInt
 import kotlin.time.Duration
 
 /**
@@ -13,10 +14,10 @@ import kotlin.time.Duration
  */
 class GameCamera(
     val viewBounds: Rect = Rect(),
+    val snapToPixel: Boolean = true,
     virtualWidth: Int,
     virtualHeight: Int
-) :
-    OrthographicCamera(virtualWidth, virtualHeight) {
+) : OrthographicCamera(virtualWidth, virtualHeight) {
     var deadZone: Int = 5
     var clampToBounds = true
     var following: Entity? = null
@@ -48,6 +49,11 @@ class GameCamera(
                 viewBounds.height * 0.5f
             } else {
                 position.y.clamp(virtualHeight * 0.5f, viewBounds.height - virtualHeight * 0.5f)
+            }
+
+            if (snapToPixel) {
+                position.x = position.x.roundToInt().toFloat()
+                position.y = position.y.roundToInt().toFloat()
             }
         }
         update()
