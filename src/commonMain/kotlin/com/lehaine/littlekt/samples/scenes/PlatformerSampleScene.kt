@@ -53,7 +53,7 @@ class PlatformerSampleScene(
     }
 
     private val camera = GameCamera(virtualWidth = graphics.width, virtualHeight = graphics.height).apply {
-        viewport = ExtendViewport(480, 270)
+        viewport = ExtendViewport(240, 135)
     }
     private val uiCam = OrthographicCamera(graphics.width, graphics.height).apply {
         viewport = ExtendViewport(480, 270)
@@ -149,7 +149,7 @@ class PlatformerSampleScene(
 }
 
 class PlatformerLevel(level: LDtkLevel) : LDtkGameLevel<PlatformerLevel.LevelMark>(level) {
-    override var gridSize: Int = 16
+    override var gridSize: Int = 8
 
     init {
         createLevelMarks()
@@ -210,12 +210,13 @@ class Hero(
 
     private val speed = 0.08f
     private var moveDir = 0f
-    private val jumpHeight = -0.95f
+    private val jumpHeight = -1.35f
     private var lastHeight = py
+    private var jumping = false
 
     init {
-        width = 8f
-        height = 8f
+        useTopCollisionRatio = true
+        topCollisionRatio = 0.5f
         setFromLevelEntity(data)
     }
 
@@ -280,6 +281,11 @@ class Hero(
         if (input.isKeyJustPressed(Key.SPACE) && cd.has(ON_GROUND_RECENTLY)) {
             velocityY = jumpHeight
             stretchX = 0.7f
+            jumping = true
+        }
+        if (!input.isKeyPressed(Key.SPACE) && jumping) {
+            velocityY *= 0.5f
+            jumping = false
         }
     }
 

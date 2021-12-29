@@ -16,7 +16,7 @@ open class PlatformEntity(level: GameLevel<*>, gridCellSize: Int) : LevelEntity(
     private val gravityPulling get() = !onGround && hasGravity
 
     init {
-        gravityY = 0.05f
+        gravityY = 0.075f
     }
 
     override fun calculateDeltaYGravity(): Float {
