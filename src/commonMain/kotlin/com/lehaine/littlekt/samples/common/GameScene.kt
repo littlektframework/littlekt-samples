@@ -22,18 +22,18 @@ fun <T : GameScene> T.addFixedInterpUpdater(
     timesPerSecond: Float,
     initial: Boolean = true,
     interpolate: (ratio: Float) -> Unit,
-    updatable: Scene.() -> Unit
-) = (this as Scene).addFixedInterpUpdater(timesPerSecond, initial, interpolate, updatable).also { updateComponents += it }
+    updatable: T.() -> Unit
+) = createFixedInterpUpdater(timesPerSecond, initial, interpolate, updatable).also { updateComponents += it }
 
 fun <T : GameScene> T.addFixedInterpUpdater(
     time: Duration,
     initial: Boolean = true,
     interpolate: (ratio: Float) -> Unit,
-    updatable: Scene.() -> Unit
-) = (this as Scene).addFixedInterpUpdater(time, initial, interpolate, updatable).also { updateComponents += it }
+    updatable: T.() -> Unit
+) = createFixedInterpUpdater(time, initial, interpolate, updatable).also { updateComponents += it }
 
 
 fun <T : GameScene> T.addTmodUpdater(
     targetFPS: Int,
-    updatable: Scene.(dt: Duration, tmod: Float) -> Unit
-) = (this as Scene).addTmodUpdater(targetFPS, updatable).also { updateComponents += it }
+    updatable: T.(dt: Duration, tmod: Float) -> Unit
+) = createTmodUpdater(targetFPS, updatable).also { updateComponents += it }

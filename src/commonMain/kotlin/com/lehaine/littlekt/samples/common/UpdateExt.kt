@@ -16,19 +16,19 @@ interface UpdateComponent {
     fun update(dt: Duration) = Unit
 }
 
-fun <T : Scene> T.addFixedInterpUpdater(
+fun <T : Scene> T.createFixedInterpUpdater(
     timesPerSecond: Float,
     initial: Boolean = true,
     interpolate: (ratio: Float) -> Unit,
     updatable: T.() -> Unit
-): UpdateComponent = addFixedInterpUpdater(
+): UpdateComponent = createFixedInterpUpdater(
     (1f / timesPerSecond).toDouble().seconds,
     initial,
     interpolate,
     updatable
 )
 
-fun <T : Scene> T.addFixedInterpUpdater(
+fun <T : Scene> T.createFixedInterpUpdater(
     time: Duration,
     initial: Boolean = true,
     interpolate: (ratio: Float) -> Unit,
@@ -40,22 +40,22 @@ fun <T : Scene> T.addFixedInterpUpdater(
             accum += dt
             while (accum >= time * 0.75) {
                 accum -= time
-                updatable(this@addFixedInterpUpdater)
+                updatable(this@createFixedInterpUpdater)
             }
 
             interpolate(accum.milliseconds / time.milliseconds)
         }
     }
     if (initial) {
-        updatable(this@addFixedInterpUpdater)
+        updatable(this@createFixedInterpUpdater)
     }
     return component
 }
 
-fun <T : Scene> T.addTmodUpdater(targetFPS: Int, updatable: T.(dt: Duration, tmod: Float) -> Unit): UpdateComponent {
+fun <T : Scene> T.createTmodUpdater(targetFPS: Int, updatable: T.(dt: Duration, tmod: Float) -> Unit): UpdateComponent {
     val component = object : UpdateComponent {
         override fun update(dt: Duration) {
-            updatable(this@addTmodUpdater, dt, dt.seconds * targetFPS)
+            updatable(this@createTmodUpdater, dt, dt.seconds * targetFPS)
         }
     }
     component.update(0.0.seconds)
