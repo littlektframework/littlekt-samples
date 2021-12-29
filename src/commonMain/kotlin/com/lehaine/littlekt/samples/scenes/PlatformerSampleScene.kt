@@ -7,13 +7,12 @@ import com.lehaine.littlekt.graphics.font.GpuFont
 import com.lehaine.littlekt.graphics.font.use
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkEntity
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkLevel
-import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkTileMap
+import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkWorld
 import com.lehaine.littlekt.input.Input
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.samples.common.*
 import com.lehaine.littlekt.util.fastForEach
 import com.lehaine.littlekt.util.viewport.ExtendViewport
-import kotlin.math.abs
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -33,7 +32,7 @@ class PlatformerSampleScene(
     private val sfxLand: AudioClip by load(resourcesVfs["sfx/land0.wav"])
     private val sfxPickup: AudioClip by load(resourcesVfs["sfx/pickup0.wav"])
 
-    private val world: LDtkTileMap by load(resourcesVfs["platformer.ldtk"])
+    private val world: LDtkWorld by load(resourcesVfs["platformer.ldtk"])
     private val ldtkLevel: LDtkLevel by prepare { world.levels[0] }
     private val level: PlatformerLevel by prepare { PlatformerLevel(ldtkLevel) }
 

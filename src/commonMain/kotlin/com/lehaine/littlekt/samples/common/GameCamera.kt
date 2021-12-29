@@ -70,7 +70,6 @@ class GameCamera(
         position.y += bumpY
 
         if (cd.has(SHAKE)) {
-            println("has shake")
             position.x += cos(shakeFrames * 1.1f) * 2.5f * shakePower * cd.ratio(SHAKE)
             position.y += sin(0.3f + shakeFrames * 1.7f) * 2.5f * shakePower * cd.ratio(SHAKE)
             shakeFrames++
