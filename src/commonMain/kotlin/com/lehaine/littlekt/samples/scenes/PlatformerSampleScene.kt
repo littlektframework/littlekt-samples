@@ -35,6 +35,7 @@ class PlatformerSampleScene(
     private val world: LDtkWorld by load(resourcesVfs["platformer.ldtk"])
     private val ldtkLevel: LDtkLevel by prepare { world.levels[0] }
     private val level: PlatformerLevel by prepare { PlatformerLevel(ldtkLevel) }
+    private val fx by prepare { Fx(atlas) }
 
     private val hero: Hero by prepare {
         Hero(
@@ -44,6 +45,7 @@ class PlatformerSampleScene(
             atlas,
             level,
             camera,
+            fx,
             input
         ).also {
             it.onDestroy = ::removeEntity
@@ -70,6 +72,9 @@ class PlatformerSampleScene(
                 entities.clear()
                 initLevel()
             }
+
+            fx.update(dt, tmod)
+
             entities.fastForEach {
                 it.fixedProgressionRatio = fixedProgressionRatio
                 it.update(dt)
@@ -83,6 +88,7 @@ class PlatformerSampleScene(
             camera.viewport.apply(this)
             batch.use(camera.viewProjection) {
                 ldtkLevel.render(it, camera)
+                fx.render(it)
                 entities.fastForEach { entity ->
                     if (entity is Renderable) {
                         entity.render(it)
@@ -197,6 +203,7 @@ class Hero(
     private val atlas: TextureAtlas,
     override val level: PlatformerLevel,
     private val camera: GameCamera,
+    private val fx: Fx,
     private val input: Input
 ) : PlatformEntity(level, level.gridSize) {
     val sprite: TextureSlice = atlas["heroIdle0.png"].slice
@@ -256,6 +263,10 @@ class Hero(
 
     private fun run() {
         if (input.isKeyPressed(Key.A) || input.isKeyPressed(Key.D)) {
+            if (onGround && !cd.has(RUN_DUST)) {
+                cd.timeout(RUN_DUST, 100.milliseconds)
+                fx.runDust(centerX, bottom, -dir)
+            }
             if (onGround && !cd.has(FOOTSTEP)) {
                 sfxFootstep.play(0.30f)
                 cd.timeout(FOOTSTEP, 350.milliseconds)
@@ -275,6 +286,7 @@ class Hero(
     companion object {
         private const val ON_GROUND_RECENTLY = "onGroundRecently"
         private const val FOOTSTEP = "footstep"
+        private const val RUN_DUST = "runDust"
     }
 }
 
@@ -286,7 +298,7 @@ class Diamond(
     private val hero: Hero
 ) : LevelEntity(level, level.gridSize),
     Renderable {
-    val sprite = atlas["diamond0.png"].slice
+    val sprite = atlas.getByPrefix("diamond").slice
 
     init {
         setFromLevelEntity(data)
