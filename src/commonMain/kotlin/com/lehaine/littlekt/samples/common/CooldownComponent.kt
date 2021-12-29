@@ -13,7 +13,7 @@ private data class CooldownTimer(
     var name: String,
     var callback: () -> Unit
 ) {
-    val ratio get() = 1 - elapsed / time
+    val ratio get() = 1f - (elapsed / time).toFloat()
     var elapsed = 0.milliseconds
     val finished get() = elapsed >= time
 
@@ -90,7 +90,7 @@ class CooldownComponent : UpdateComponent {
 
     fun remove(name: String) = removeTimer(name)
 
-    fun ratio(name: String): Double {
-        return timers[name]?.ratio ?: 0.0
+    fun ratio(name: String): Float {
+        return timers[name]?.ratio ?: 0f
     }
 }

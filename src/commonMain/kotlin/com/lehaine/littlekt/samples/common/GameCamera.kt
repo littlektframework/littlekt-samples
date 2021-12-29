@@ -4,8 +4,12 @@ import com.lehaine.littlekt.graphics.OrthographicCamera
 import com.lehaine.littlekt.math.Rect
 import com.lehaine.littlekt.math.clamp
 import com.lehaine.littlekt.math.dist
+import com.lehaine.littlekt.math.geom.Angle
+import com.lehaine.littlekt.math.geom.cosine
 import com.lehaine.littlekt.math.interpolate
+import kotlin.math.cos
 import kotlin.math.roundToInt
+import kotlin.math.sin
 import kotlin.time.Duration
 
 /**
@@ -24,9 +28,16 @@ class GameCamera(
         private set
 
     private var shakePower = 1f
+    private var shakeFrames = 0
+
+    private var bumpX = 0f
+    private var bumpY = 0f
+
     private val cd = CooldownComponent()
 
     fun update(dt: Duration) {
+        cd.update(dt)
+
         val following = following
         if (following != null) {
             val dist = dist(position.x, position.y, following.px, following.py)
@@ -51,12 +62,45 @@ class GameCamera(
                 position.y.clamp(virtualHeight * 0.5f, viewBounds.height - virtualHeight * 0.5f)
             }
 
-            if (snapToPixel) {
-                position.x = position.x.roundToInt().toFloat()
-                position.y = position.y.roundToInt().toFloat()
-            }
         }
+        bumpX *= 0.75f
+        bumpY *= 0.75f
+
+        position.x += bumpX
+        position.y += bumpY
+
+        if (cd.has(SHAKE)) {
+            println("has shake")
+            position.x += cos(shakeFrames * 1.1f) * 2.5f * shakePower * cd.ratio(SHAKE)
+            position.y += sin(0.3f + shakeFrames * 1.7f) * 2.5f * shakePower * cd.ratio(SHAKE)
+            shakeFrames++
+        } else {
+            shakeFrames = 0
+        }
+
+        if (snapToPixel) {
+            position.x = position.x.roundToInt().toFloat()
+            position.y = position.y.roundToInt().toFloat()
+        }
+
         update()
+    }
+
+    fun shake(time: Duration, power: Float = 1f) {
+        cd.timeout(SHAKE, time)
+        shakePower = power
+    }
+
+    fun bump(x: Float = 0f, y: Float = 0f) {
+        bumpX += x
+        bumpY += y
+    }
+
+    fun bump(x: Int = 0, y: Int = 0) = bump(x.toFloat(), y.toFloat())
+
+    fun bump(angle: Angle, distance: Int) {
+        bumpX += angle.cosine * distance
+        bumpY += angle.radians * distance
     }
 
     fun follow(entity: Entity?, setImmediately: Boolean = false) {
@@ -69,5 +113,9 @@ class GameCamera(
 
     fun unfollow() {
         following = null
+    }
+
+    companion object {
+        private const val SHAKE = "shake"
     }
 }

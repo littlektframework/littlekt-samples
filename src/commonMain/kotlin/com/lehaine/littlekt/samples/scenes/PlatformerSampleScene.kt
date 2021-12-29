@@ -13,6 +13,7 @@ import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.samples.common.*
 import com.lehaine.littlekt.util.fastForEach
 import com.lehaine.littlekt.util.viewport.ExtendViewport
+import kotlin.math.abs
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -43,6 +44,7 @@ class PlatformerSampleScene(
             sfxLand,
             atlas,
             level,
+            camera,
             input
         ).also {
             it.onDestroy = ::removeEntity
@@ -195,7 +197,8 @@ class Hero(
     private val sfxLand: AudioClip,
     private val atlas: TextureAtlas,
     override val level: PlatformerLevel,
-    val input: Input
+    private val camera: GameCamera,
+    private val input: Input
 ) : PlatformEntity(level, level.gridSize) {
     val sprite: TextureSlice = atlas["heroIdle0.png"].slice
 
@@ -228,8 +231,9 @@ class Hero(
 
         if (onGround) {
             cd(ON_GROUND_RECENTLY, 150.milliseconds)
-            if (lastHeight - py > 25) {
+            if (py - lastHeight > 25) {
                 sfxLand.play()
+                camera.shake(25.milliseconds, 0.7f)
             }
             lastHeight = py
         } else {
