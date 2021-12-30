@@ -90,9 +90,7 @@ class PlatformerSampleScene(
                 ldtkLevel.render(it, camera)
                 fx.render(it)
                 entities.fastForEach { entity ->
-                    if (entity is Renderable) {
-                        entity.render(it)
-                    }
+                    entity.render(it)
                 }
                 hero.render(it)
             }
@@ -206,7 +204,8 @@ class Hero(
     private val fx: Fx,
     private val input: Input
 ) : PlatformEntity(level, level.gridSize) {
-    val sprite: TextureSlice = atlas["heroIdle0.png"].slice
+    private val idle = atlas.getAnimation("heroIdle", 500.milliseconds)
+    private val run = atlas.getAnimation("heroRun")
 
     private val speed = 0.08f
     private var moveDir = 0f
@@ -218,18 +217,6 @@ class Hero(
         useTopCollisionRatio = true
         topCollisionRatio = 0.5f
         setFromLevelEntity(data)
-    }
-
-    fun render(batch: SpriteBatch) {
-        batch.draw(
-            slice = sprite,
-            x = px,
-            y = py,
-            originX = sprite.width * anchorX,
-            originY = sprite.height * anchorY,
-            scaleX = scaleX,
-            scaleY = scaleY
-        )
     }
 
     override fun update(dt: Duration) {
@@ -274,6 +261,9 @@ class Hero(
             }
             dir = if (input.isKeyPressed(Key.D)) 1 else -1
             moveDir = dir.toFloat()
+            anim.playLooped(run)
+        } else {
+            anim.playLooped(idle)
         }
     }
 
@@ -302,25 +292,12 @@ class Diamond(
     private val atlas: TextureAtlas,
     level: PlatformerLevel,
     private val hero: Hero
-) : LevelEntity(level, level.gridSize),
-    Renderable {
-    val sprite = atlas.getByPrefix("diamond").slice
+) : LevelEntity(level, level.gridSize) {
 
     init {
+        sprite = atlas.getByPrefix("diamond").slice
         setFromLevelEntity(data)
         ALL += this
-    }
-
-    override fun render(batch: SpriteBatch) {
-        batch.draw(
-            slice = sprite,
-            x = px,
-            y = py,
-            originX = sprite.width * anchorX,
-            originY = sprite.height * anchorY,
-            scaleX = scaleX,
-            scaleY = scaleY
-        )
     }
 
     override fun update(dt: Duration) {

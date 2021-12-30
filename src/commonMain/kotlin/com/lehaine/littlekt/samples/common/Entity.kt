@@ -1,5 +1,9 @@
 package com.lehaine.littlekt.samples.common
 
+import com.lehaine.littlekt.graphics.AnimationPlayer
+import com.lehaine.littlekt.graphics.SpriteBatch
+import com.lehaine.littlekt.graphics.TextureSlice
+import com.lehaine.littlekt.graphics.Textures
 import com.lehaine.littlekt.math.interpolate
 import com.lehaine.littlekt.util.seconds
 import kotlin.math.abs
@@ -111,8 +115,29 @@ open class Entity(val gridCellSize: Int) {
     var destroyed = false
         protected set
 
+    var sprite: TextureSlice = Textures.white
+    val anim = AnimationPlayer<TextureSlice>().apply {
+        onFrameChange = {
+            sprite = currentAnimation?.get(it) ?: sprite
+        }
+    }
+    var visible: Boolean = true
+
+    fun render(batch: SpriteBatch) {
+        if(!visible) return
+
+        batch.draw(
+            sprite, px, py,
+            anchorX * sprite.width,
+            anchorY * sprite.height,
+            scaleX = scaleX,
+            scaleY = scaleY
+        )
+    }
+
     open fun update(dt: Duration) {
         cooldown.update(dt)
+        anim.update(dt)
     }
 
     open fun fixedUpdate() {
