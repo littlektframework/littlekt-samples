@@ -53,7 +53,7 @@ class PlatformerSampleScene(
     }
 
     private val camera = GameCamera(virtualWidth = graphics.width, virtualHeight = graphics.height).apply {
-        viewport = ExtendViewport(240, 135)
+        viewport = ExtendViewport(200, 200)
     }
     private val uiCam = OrthographicCamera(graphics.width, graphics.height).apply {
         viewport = ExtendViewport(480, 270)
