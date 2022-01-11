@@ -4,8 +4,6 @@ import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.Game
 import com.lehaine.littlekt.graphics.SpriteBatch
 import com.lehaine.littlekt.graphics.font.BitmapFont
-import com.lehaine.littlekt.graphics.font.GpuFont
-import com.lehaine.littlekt.graphics.font.TtfFont
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.log.Logger
 import com.lehaine.littlekt.samples.common.GameScene
