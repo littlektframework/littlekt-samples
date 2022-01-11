@@ -11,7 +11,7 @@ import kotlin.time.Duration
 open class GameScene(context: Context) : Scene(context) {
     val updateComponents = mutableListOf<UpdateComponent>()
 
-    override fun render(dt: Duration) {
+    override suspend fun render(dt: Duration) {
         updateComponents.forEach {
             it.update(dt)
         }

@@ -3,13 +3,13 @@ package com.lehaine.littlekt.samples
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.Game
 import com.lehaine.littlekt.graphics.SpriteBatch
+import com.lehaine.littlekt.graphics.font.BitmapFont
 import com.lehaine.littlekt.graphics.font.GpuFont
 import com.lehaine.littlekt.graphics.font.TtfFont
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.log.Logger
 import com.lehaine.littlekt.samples.common.GameScene
 import com.lehaine.littlekt.samples.scenes.PlatformerSampleScene
-import kotlin.time.Duration
 
 /**
  * @author Colton Daily
@@ -17,27 +17,23 @@ import kotlin.time.Duration
  */
 class SampleGame(context: Context) : Game<GameScene>(context) {
 
-    private val batch = SpriteBatch(this)
-    private val pixelFont: TtfFont by load(resourcesVfs["m5x7.ttf"])
-    private val gpuFontRenderer by prepare { GpuFont(this, pixelFont) }
+    private val batch = SpriteBatch(context)
+    private val pixelFont: BitmapFont by load(resourcesVfs["m5x7_16.fnt"])
 
     init {
-        Logger.defaultLevel = Logger.Level.DEBUG
-        logger.level = Logger.Level.DEBUG
+        Logger.setLevels(Logger.Level.DEBUG)
     }
 
-    override fun create() {
-        addScene(PlatformerSampleScene(batch, gpuFontRenderer, context))
+    override suspend fun Context.run() {
+        addScene(PlatformerSampleScene(batch, pixelFont, context))
         setScene<PlatformerSampleScene>()
-    }
-
-    override fun update(dt: Duration) {
-        if (input.isKeyJustPressed(Key.ESCAPE)) {
-            close()
+        onRender {
+            if (input.isKeyJustPressed(Key.ESCAPE)) {
+                close()
+            }
         }
-    }
-
-    override fun dispose() {
-        batch.dispose()
+        onDispose {
+            batch.dispose()
+        }
     }
 }

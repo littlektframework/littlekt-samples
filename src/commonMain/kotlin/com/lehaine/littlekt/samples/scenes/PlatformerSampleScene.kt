@@ -2,9 +2,10 @@ package com.lehaine.littlekt.samples.scenes
 
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.audio.AudioClip
+import com.lehaine.littlekt.graph.node.component.HAlign
 import com.lehaine.littlekt.graphics.*
-import com.lehaine.littlekt.graphics.font.GpuFont
-import com.lehaine.littlekt.graphics.font.use
+import com.lehaine.littlekt.graphics.font.BitmapFont
+import com.lehaine.littlekt.graphics.font.BitmapFontCache
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkEntity
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkLevel
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkWorld
@@ -22,9 +23,10 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 class PlatformerSampleScene(
     val batch: SpriteBatch,
-    val gpuFontRenderer: GpuFont,
+    val font: BitmapFont,
     context: Context
 ) : GameScene(context) {
+    private val fontCache = BitmapFontCache(font)
     private val entities = mutableListOf<Entity>()
     private val atlas: TextureAtlas by load(resourcesVfs["tiles.atlas.json"])
 
@@ -96,12 +98,9 @@ class PlatformerSampleScene(
             }
             uiCam.update()
             uiCam.viewport.apply(this)
-            gpuFontRenderer.use(uiCam.viewProjection) {
-                if (gameOver) {
-                    it.drawText("You Win!\nR to Restart", 200f, 135f, 36, color = Color.WHITE)
-                } else {
-                    it.drawText("Diamonds left: ${Diamond.ALL.size}", 10f, 25f, 36, color = Color.WHITE)
-                }
+
+            batch.use(uiCam.viewProjection) {
+                fontCache.draw(it)
             }
         }
 
@@ -124,13 +123,27 @@ class PlatformerSampleScene(
         camera.viewBounds.width = ldtkLevel.pxWidth.toFloat()
         camera.viewBounds.height = ldtkLevel.pxHeight.toFloat()
         camera.follow(hero, true)
+        fontCache.setText("Diamonds left: ${Diamond.ALL.size}", 10f, 5f, scaleX = 2f, scaleY = 2f)
     }
 
     private fun removeEntity(entity: Entity) {
         entities.remove(entity)
+        if (entity is Diamond) {
+            fontCache.setText("Diamonds left: ${Diamond.ALL.size}", 10f, 5f, scaleX = 2f, scaleY = 2f)
+        }
+        if (gameOver) {
+            fontCache.setText(
+                "You Win!\nR to Restart",
+                uiCam.virtualWidth * 0.5f,
+                uiCam.virtualHeight * 0.5f - 30,
+                scaleX = 2f,
+                scaleY = 2f,
+                align = HAlign.CENTER
+            )
+        }
     }
 
-    override fun resize(width: Int, height: Int) {
+    override suspend fun resize(width: Int, height: Int) {
         camera.update(width, height, this)
         uiCam.update(width, height, this)
     }
@@ -308,8 +321,8 @@ class Diamond(
     }
 
     override fun destroy() {
-        super.destroy()
         ALL.remove(this)
+        super.destroy()
     }
 
     companion object {
