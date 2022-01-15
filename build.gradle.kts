@@ -11,14 +11,14 @@ version = "1.0"
 
 repositories {
     mavenCentral()
+    maven(url ="https://s01.oss.sonatype.org/content/repositories/snapshots/")
     maven(url = "https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
-    mavenLocal()
 }
 
 kotlin {
     jvm {
         compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
+            kotlinOptions.jvmTarget = "11"
         }
         testRuns["test"].executionTask.configure {
             useJUnit()
@@ -58,32 +58,15 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
-        val jvmMain by getting {
-            dependencies {
-                implementation("com.lehaine.littlekt:core:$littleKtVersion")
-            }
-        }
+        val jvmMain by getting
         val jvmTest by getting
         val jsMain by getting {
             dependencies {
                 val kotlinxHtmlVersion = "0.7.2"
-                implementation("com.lehaine.littlekt:core:$littleKtVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-html-js:$kotlinxHtmlVersion")
             }
 
         }
         val jsTest by getting
-
-        all {
-            languageSettings.apply {
-                progressiveMode = true
-                optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
-                optIn("kotlin.contracts.ExperimentalContracts")
-                optIn("kotlin.ExperimentalUnsignedTypes")
-                optIn("kotlin.ExperimentalStdlibApi")
-                optIn("kotlinx.serialization.ExperimentalSerializationApi")
-                optIn("kotlin.time.ExperimentalTime")
-            }
-        }
     }
 }
