@@ -63,7 +63,7 @@ class PlatformerSampleScene(
     private val gameOver get() = Diamond.ALL.size == 0
     private var fixedProgressionRatio = 1f
 
-    override fun create() {
+    private fun create() {
         initLevel()
 
         addTmodUpdater(60) { dt, tmod ->
@@ -109,6 +109,15 @@ class PlatformerSampleScene(
             interpolate = { ratio -> fixedProgressionRatio = ratio },
             updatable = { entities.fastForEach { it.fixedUpdate() } }
         )
+    }
+
+    private var created = false
+    override suspend fun render(dt: Duration) {
+        super.render(dt)
+        if (!created && fullyLoaded) {
+            created = true
+            create()
+        }
     }
 
     private fun initLevel() {
