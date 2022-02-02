@@ -1,9 +1,22 @@
+import com.lehaine.littlekt.gradle.texturepacker.littleKt
+import com.lehaine.littlekt.gradle.texturepacker.texturePacker
 import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+
+buildscript {
+    val littleKtVersion: String by project
+    repositories {
+        maven(url = "https://s01.oss.sonatype.org/content/repositories/snapshots/")
+    }
+    dependencies {
+        classpath("com.lehaine.littlekt.gradle:texturepacker:$littleKtVersion")
+    }
+}
 
 plugins {
     kotlin("multiplatform") version "1.6.10"
     kotlin("plugin.serialization") version "1.6.10"
+    id("com.lehaine.littlekt.gradle.texturepacker") version "0.0.1-SNAPSHOT"
 }
 
 group = "com.lehaine"
@@ -11,8 +24,16 @@ version = "1.0"
 
 repositories {
     mavenCentral()
-    maven(url ="https://s01.oss.sonatype.org/content/repositories/snapshots/")
+    maven(url = "https://s01.oss.sonatype.org/content/repositories/snapshots/")
     maven(url = "https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
+}
+
+littleKt {
+    texturePacker {
+        inputDir = "art/export_tiles/"
+        outputDir = "src/commonMain/resources/"
+        outputName = "tiles.atlas"
+    }
 }
 
 kotlin {
@@ -44,7 +65,7 @@ kotlin {
         }
     }
     val kotlinCoroutinesVersion: String by project
-    val littleKtVersion:String by project
+    val littleKtVersion: String by project
 
     sourceSets {
         val commonMain by getting {

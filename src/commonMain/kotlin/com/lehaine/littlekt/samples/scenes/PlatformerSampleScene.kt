@@ -28,13 +28,13 @@ class PlatformerSampleScene(
 ) : GameScene(context) {
     private val fontCache = BitmapFontCache(font)
     private val entities = mutableListOf<Entity>()
-    private val atlas: TextureAtlas by load(resourcesVfs["tiles.atlas.json"])
+    private val atlas: TextureAtlas by load(context.resourcesVfs["tiles.atlas.json"])
 
-    private val sfxFootstep: AudioClip by load(resourcesVfs["sfx/footstep0.wav"])
-    private val sfxLand: AudioClip by load(resourcesVfs["sfx/land0.wav"])
-    private val sfxPickup: AudioClip by load(resourcesVfs["sfx/pickup0.wav"])
+    private val sfxFootstep: AudioClip by load(context.resourcesVfs["sfx/footstep0.wav"])
+    private val sfxLand: AudioClip by load(context.resourcesVfs["sfx/land0.wav"])
+    private val sfxPickup: AudioClip by load(context.resourcesVfs["sfx/pickup0.wav"])
 
-    private val world: LDtkWorld by load(resourcesVfs["platformer.ldtk"])
+    private val world: LDtkWorld by load(context.resourcesVfs["platformer.ldtk"])
     private val ldtkLevel: LDtkLevel by prepare { world.levels[0] }
     private val level: PlatformerLevel by prepare { PlatformerLevel(ldtkLevel) }
     private val fx by prepare { Fx(atlas) }
@@ -48,16 +48,16 @@ class PlatformerSampleScene(
             level,
             camera,
             fx,
-            input
+            context.input
         ).also {
             it.onDestroy = ::removeEntity
         }
     }
 
-    private val camera = GameCamera(virtualWidth = graphics.width, virtualHeight = graphics.height).apply {
+    private val camera = GameCamera(virtualWidth = context.graphics.width, virtualHeight = context.graphics.height).apply {
         viewport = ExtendViewport(200, 200)
     }
-    private val uiCam = OrthographicCamera(graphics.width, graphics.height).apply {
+    private val uiCam = OrthographicCamera(context.graphics.width, context.graphics.height).apply {
         viewport = ExtendViewport(480, 270)
     }
     private val gameOver get() = Diamond.ALL.size == 0
@@ -67,7 +67,7 @@ class PlatformerSampleScene(
         initLevel()
 
         addTmodUpdater(60) { dt, tmod ->
-            if (input.isKeyJustPressed(Key.R) && gameOver) {
+            if (context.input.isKeyJustPressed(Key.R) && gameOver) {
                 entities.fastForEach {
                     it.destroy()
                 }
@@ -87,7 +87,7 @@ class PlatformerSampleScene(
             }
 
             camera.update(dt)
-            camera.viewport.apply(this)
+            camera.viewport.apply(context)
             batch.use(camera.viewProjection) {
                 ldtkLevel.render(it, camera)
                 fx.render(it)
@@ -97,7 +97,7 @@ class PlatformerSampleScene(
                 hero.render(it)
             }
             uiCam.update()
-            uiCam.viewport.apply(this)
+            uiCam.viewport.apply(context)
 
             batch.use(uiCam.viewProjection) {
                 fontCache.draw(it)
@@ -117,6 +117,8 @@ class PlatformerSampleScene(
         if (!created && fullyLoaded) {
             created = true
             create()
+        } else {
+            update()
         }
     }
 
@@ -153,8 +155,8 @@ class PlatformerSampleScene(
     }
 
     override suspend fun resize(width: Int, height: Int) {
-        camera.update(width, height, this)
-        uiCam.update(width, height, this)
+        camera.update(width, height, context)
+        uiCam.update(width, height, context)
     }
 
     override fun dispose() {
