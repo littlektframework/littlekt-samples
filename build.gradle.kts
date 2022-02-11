@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 buildscript {
     val littleKtVersion: String by project
     repositories {
+        mavenLocal()
         mavenCentral()
     }
     dependencies {
@@ -16,13 +17,14 @@ buildscript {
 plugins {
     kotlin("multiplatform") version "1.6.10"
     kotlin("plugin.serialization") version "1.6.10"
-    id("com.lehaine.littlekt.gradle.texturepacker") version "0.1.0"
+//    id("com.lehaine.littlekt.gradle.texturepacker") version "0.2.0-SNAPSHOT"
 }
 
 group = "com.lehaine"
 version = "1.0"
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven(url = "https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
 }
