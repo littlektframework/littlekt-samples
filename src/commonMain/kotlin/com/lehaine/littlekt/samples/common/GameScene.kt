@@ -2,6 +2,7 @@ package com.lehaine.littlekt.samples.common
 
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.Scene
+import com.lehaine.littlekt.graphics.gl.ClearBufferMask
 import kotlin.time.Duration
 
 /**
@@ -11,7 +12,8 @@ import kotlin.time.Duration
 open class GameScene(context: Context) : Scene(context) {
     val updateComponents = mutableListOf<UpdateComponent>()
 
-    override suspend fun render(dt: Duration) {
+    override suspend fun Context.render(dt: Duration) {
+        gl.clear(ClearBufferMask.COLOR_DEPTH_BUFFER_BIT)
         updateComponents.forEach {
             it.update(dt)
         }

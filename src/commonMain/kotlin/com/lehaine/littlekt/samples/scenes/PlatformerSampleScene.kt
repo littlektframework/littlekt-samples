@@ -1,5 +1,6 @@
 package com.lehaine.littlekt.samples.scenes
 
+import com.lehaine.littlekt.AssetProvider
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.audio.AudioClip
 import com.lehaine.littlekt.graph.node.component.HAlign
@@ -23,23 +24,24 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 class PlatformerSampleScene(
     val batch: SpriteBatch,
-    val font: BitmapFont,
+    val assets: AssetProvider,
     context: Context
 ) : GameScene(context) {
-    private val fontCache = BitmapFontCache(font)
+    private val pixelFont by assets.load<BitmapFont>(context.resourcesVfs["m5x7_16.fnt"])
+    private val fontCache by assets.prepare { BitmapFontCache(pixelFont) }
     private val entities = mutableListOf<Entity>()
-    private val atlas: TextureAtlas by load(context.resourcesVfs["tiles.atlas.json"])
+    private val atlas: TextureAtlas by assets.load(context.resourcesVfs["tiles.atlas.json"])
 
-    private val sfxFootstep: AudioClip by load(context.resourcesVfs["sfx/footstep0.wav"])
-    private val sfxLand: AudioClip by load(context.resourcesVfs["sfx/land0.wav"])
-    private val sfxPickup: AudioClip by load(context.resourcesVfs["sfx/pickup0.wav"])
+    private val sfxFootstep: AudioClip by assets.load(context.resourcesVfs["sfx/footstep0.wav"])
+    private val sfxLand: AudioClip by assets.load(context.resourcesVfs["sfx/land0.wav"])
+    private val sfxPickup: AudioClip by assets.load(context.resourcesVfs["sfx/pickup0.wav"])
 
-    private val world: LDtkWorld by load(context.resourcesVfs["platformer.ldtk"])
-    private val ldtkLevel: LDtkLevel by prepare { world.levels[0] }
-    private val level: PlatformerLevel by prepare { PlatformerLevel(ldtkLevel) }
-    private val fx by prepare { Fx(atlas) }
+    private val world: LDtkWorld by assets.load(context.resourcesVfs["platformer.ldtk"])
+    private val ldtkLevel: LDtkLevel by assets.prepare { world.levels[0] }
+    private val level: PlatformerLevel by assets.prepare { PlatformerLevel(ldtkLevel) }
+    private val fx by assets.prepare { Fx(atlas) }
 
-    private val hero: Hero by prepare {
+    private val hero: Hero by assets.prepare {
         Hero(
             ldtkLevel.entities("Player")[0],
             sfxFootstep,
@@ -54,14 +56,21 @@ class PlatformerSampleScene(
         }
     }
 
-    private val camera = GameCamera(virtualWidth = context.graphics.width, virtualHeight = context.graphics.height).apply {
-        viewport = ExtendViewport(200, 200)
-    }
+    private val camera =
+        GameCamera(virtualWidth = context.graphics.width, virtualHeight = context.graphics.height).apply {
+            viewport = ExtendViewport(200, 200)
+        }
     private val uiCam = OrthographicCamera(context.graphics.width, context.graphics.height).apply {
         viewport = ExtendViewport(480, 270)
     }
     private val gameOver get() = Diamond.ALL.size == 0
     private var fixedProgressionRatio = 1f
+
+    override suspend fun Context.show() {
+        if (!created) {
+            create()
+        }
+    }
 
     private fun create() {
         initLevel()
@@ -111,16 +120,17 @@ class PlatformerSampleScene(
         )
     }
 
-    private var created = false
-    override suspend fun render(dt: Duration) {
-        super.render(dt)
-        if (!created && fullyLoaded) {
-            created = true
-            create()
-        } else {
-            update()
+
+    override suspend fun Context.hide() {
+        created = false
+        updateComponents.clear()
+        entities.fastForEach {
+            it.destroy()
         }
+        entities.clear()
     }
+
+    private var created = false
 
     private fun initLevel() {
         hero.setFromLevelEntity(ldtkLevel.entities("Player")[0])
@@ -154,12 +164,12 @@ class PlatformerSampleScene(
         }
     }
 
-    override suspend fun resize(width: Int, height: Int) {
+    override suspend fun Context.resize(width: Int, height: Int) {
         camera.update(width, height, context)
         uiCam.update(width, height, context)
     }
 
-    override fun dispose() {
+    override fun Context.dispose() {
         world.dispose()
         atlas.entries.forEach {
             it.texture.dispose()
