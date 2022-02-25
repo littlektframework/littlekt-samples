@@ -1,6 +1,5 @@
 package com.lehaine.littlekt.samples.scenes
 
-import com.lehaine.littlekt.AssetProvider
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.async.KtScope
 import com.lehaine.littlekt.graph.node.node2d.ui.button
@@ -22,7 +21,6 @@ import kotlin.time.Duration
  */
 class SelectionScene(
     private val batch: SpriteBatch,
-    private val assets: AssetProvider,
     private val onSelection: suspend (KClass<out GameScene>) -> Unit,
     context: Context
 ) : GameScene(context) {
@@ -48,10 +46,10 @@ class SelectionScene(
                         }
                     }
                     button {
-                        text = "UI - Complex Layout"
+                        text = "UI - RPG"
                         onPressed += {
                             KtScope.launch {
-                                onSelection(ComplexUIScene::class)
+                                onSelection(RPGUIScene::class)
                             }
                         }
                     }

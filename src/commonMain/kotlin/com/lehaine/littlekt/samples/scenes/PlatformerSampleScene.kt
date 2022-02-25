@@ -1,17 +1,16 @@
 package com.lehaine.littlekt.samples.scenes
 
-import com.lehaine.littlekt.AssetProvider
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.audio.AudioClip
 import com.lehaine.littlekt.graph.node.component.HAlign
 import com.lehaine.littlekt.graphics.*
-import com.lehaine.littlekt.graphics.font.BitmapFont
 import com.lehaine.littlekt.graphics.font.BitmapFontCache
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkEntity
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkLevel
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkWorld
 import com.lehaine.littlekt.input.Input
 import com.lehaine.littlekt.input.Key
+import com.lehaine.littlekt.samples.Assets
 import com.lehaine.littlekt.samples.common.*
 import com.lehaine.littlekt.util.fastForEach
 import com.lehaine.littlekt.util.viewport.ExtendViewport
@@ -24,24 +23,30 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 class PlatformerSampleScene(
     val batch: SpriteBatch,
-    val assets: AssetProvider,
     context: Context
 ) : GameScene(context) {
-    private val pixelFont by assets.load<BitmapFont>(context.resourcesVfs["m5x7_16.fnt"])
-    private val fontCache by assets.prepare { BitmapFontCache(pixelFont) }
+    private val fontCache = BitmapFontCache(Assets.pixelFont)
     private val entities = mutableListOf<Entity>()
-    private val atlas: TextureAtlas by assets.load(context.resourcesVfs["tiles.atlas.json"])
+    private val atlas: TextureAtlas get() = Assets.atlas
 
-    private val sfxFootstep: AudioClip by assets.load(context.resourcesVfs["sfx/footstep0.wav"])
-    private val sfxLand: AudioClip by assets.load(context.resourcesVfs["sfx/land0.wav"])
-    private val sfxPickup: AudioClip by assets.load(context.resourcesVfs["sfx/pickup0.wav"])
+    private val sfxFootstep: AudioClip get() = Assets.sfxFootstep
+    private val sfxLand: AudioClip get() = Assets.sfxLand
+    private val sfxPickup: AudioClip get() = Assets.sfxPickup
 
-    private val world: LDtkWorld by assets.load(context.resourcesVfs["platformer.ldtk"])
-    private val ldtkLevel: LDtkLevel by assets.prepare { world.levels[0] }
-    private val level: PlatformerLevel by assets.prepare { PlatformerLevel(ldtkLevel) }
-    private val fx by assets.prepare { Fx(atlas) }
+    private val world: LDtkWorld get() = Assets.platformerWorld
+    private val ldtkLevel: LDtkLevel = world.levels[0]
+    private val level: PlatformerLevel = PlatformerLevel(ldtkLevel)
+    private val fx = Fx(atlas)
 
-    private val hero: Hero by assets.prepare {
+    private val camera =
+        GameCamera(virtualWidth = context.graphics.width, virtualHeight = context.graphics.height).apply {
+            viewport = ExtendViewport(200, 200)
+        }
+    private val uiCam = OrthographicCamera(context.graphics.width, context.graphics.height).apply {
+        viewport = ExtendViewport(480, 270)
+    }
+
+    private val hero: Hero =
         Hero(
             ldtkLevel.entities("Player")[0],
             sfxFootstep,
@@ -54,15 +59,7 @@ class PlatformerSampleScene(
         ).also {
             it.onDestroy = ::removeEntity
         }
-    }
 
-    private val camera =
-        GameCamera(virtualWidth = context.graphics.width, virtualHeight = context.graphics.height).apply {
-            viewport = ExtendViewport(200, 200)
-        }
-    private val uiCam = OrthographicCamera(context.graphics.width, context.graphics.height).apply {
-        viewport = ExtendViewport(480, 270)
-    }
     private val gameOver get() = Diamond.ALL.size == 0
     private var fixedProgressionRatio = 1f
 

@@ -17,7 +17,7 @@ buildscript {
 plugins {
     kotlin("multiplatform") version "1.6.10"
     kotlin("plugin.serialization") version "1.6.10"
-//    id("com.lehaine.littlekt.gradle.texturepacker") version "0.2.0-SNAPSHOT"
+    id("com.lehaine.littlekt.gradle.texturepacker") version "0.2.0-SNAPSHOT"
 }
 
 group = "com.lehaine"
