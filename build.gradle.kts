@@ -8,6 +8,7 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven(url ="https://s01.oss.sonatype.org/content/repositories/snapshots/")
     }
     dependencies {
         classpath("com.lehaine.littlekt.gradle:texturepacker:$littleKtVersion")
@@ -26,6 +27,7 @@ version = "1.0"
 repositories {
     mavenLocal()
     mavenCentral()
+    maven(url ="https://s01.oss.sonatype.org/content/repositories/snapshots/")
     maven(url = "https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
 }
 
