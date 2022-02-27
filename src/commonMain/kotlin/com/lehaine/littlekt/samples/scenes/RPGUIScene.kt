@@ -224,7 +224,7 @@ class RPGUIScene(
     }
 
     override suspend fun Context.resize(width: Int, height: Int) {
-        graph.resize(width, height)
+        graph.resize(width, height, true)
     }
 
     override suspend fun Context.hide() {
