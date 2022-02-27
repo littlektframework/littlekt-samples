@@ -187,7 +187,7 @@ class RPGUIScene(
                             padding(7)
                             label {
                                 text =
-                                    "Press Z and X to increase / decrease health bar.\nPress C and V to increase / decrease mana bar."
+                                    "Press Z and X to decrexase / increase health bar.\nPress C and V to decrease / increase mana bar."
                                 font = pixelFont
                             }
 
