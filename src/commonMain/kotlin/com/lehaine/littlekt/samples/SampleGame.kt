@@ -35,7 +35,7 @@ class SampleGame(context: Context) : Game<GameScene>(context) {
     private suspend fun <T : GameScene> onSelection(scene: KClass<out T>) = setScene(scene)
 
     override suspend fun Context.start() {
-        super.setSceneCallbacks(this)
+        setSceneCallbacks(this)
         Assets.createInstance(this) {
             KtScope.launch {
                 addScene(SelectionScene(batch, ::onSelection, context))
@@ -51,10 +51,18 @@ class SampleGame(context: Context) : Game<GameScene>(context) {
                     setScene<SelectionScene>()
                 }
             }
+
             if (input.isKeyJustPressed(Key.ESCAPE)) {
                 close()
             }
         }
+
+        onPostRender {
+            if(input.isKeyJustPressed(Key.P)) {
+                logger.info { stats }
+            }
+        }
+
         onDispose {
             batch.dispose()
         }
