@@ -1,6 +1,7 @@
 package com.lehaine.littlekt.samples
 
 import com.lehaine.littlekt.createLittleKtApp
+import com.lehaine.littlekt.samples.game.SampleGame
 
 /**
  * @author Colton Daily

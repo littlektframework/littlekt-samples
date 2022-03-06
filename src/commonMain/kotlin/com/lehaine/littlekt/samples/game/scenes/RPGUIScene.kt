@@ -1,4 +1,4 @@
-package com.lehaine.littlekt.samples.scenes
+package com.lehaine.littlekt.samples.game.scenes
 
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.graph.node.component.HAlign
@@ -14,8 +14,8 @@ import com.lehaine.littlekt.graphics.font.BitmapFont
 import com.lehaine.littlekt.graphics.gl.ClearBufferMask
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.math.clamp
-import com.lehaine.littlekt.samples.Assets
-import com.lehaine.littlekt.samples.common.GameScene
+import com.lehaine.littlekt.samples.game.Assets
+import com.lehaine.littlekt.samples.game.common.GameScene
 import com.lehaine.littlekt.util.viewport.ExtendViewport
 import kotlin.time.Duration
 

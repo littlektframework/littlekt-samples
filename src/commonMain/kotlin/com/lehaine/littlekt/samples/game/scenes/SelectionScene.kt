@@ -1,4 +1,4 @@
-package com.lehaine.littlekt.samples.scenes
+package com.lehaine.littlekt.samples.game.scenes
 
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.async.KtScope
@@ -9,7 +9,7 @@ import com.lehaine.littlekt.graph.node.node2d.ui.vBoxContainer
 import com.lehaine.littlekt.graph.sceneGraph
 import com.lehaine.littlekt.graphics.SpriteBatch
 import com.lehaine.littlekt.graphics.gl.ClearBufferMask
-import com.lehaine.littlekt.samples.common.GameScene
+import com.lehaine.littlekt.samples.game.common.GameScene
 import com.lehaine.littlekt.util.viewport.FitViewport
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass

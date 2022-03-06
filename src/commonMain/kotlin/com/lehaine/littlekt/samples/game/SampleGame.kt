@@ -1,4 +1,4 @@
-package com.lehaine.littlekt.samples
+package com.lehaine.littlekt.samples.game
 
 import com.lehaine.littlekt.AssetProvider
 import com.lehaine.littlekt.Context
@@ -6,16 +6,17 @@ import com.lehaine.littlekt.Disposable
 import com.lehaine.littlekt.Game
 import com.lehaine.littlekt.async.KtScope
 import com.lehaine.littlekt.audio.AudioClip
+import com.lehaine.littlekt.file.ldtk.LDtkMapLoader
 import com.lehaine.littlekt.graphics.SpriteBatch
 import com.lehaine.littlekt.graphics.TextureAtlas
 import com.lehaine.littlekt.graphics.font.BitmapFont
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkWorld
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.log.Logger
-import com.lehaine.littlekt.samples.common.GameScene
-import com.lehaine.littlekt.samples.scenes.RPGUIScene
-import com.lehaine.littlekt.samples.scenes.PlatformerSampleScene
-import com.lehaine.littlekt.samples.scenes.SelectionScene
+import com.lehaine.littlekt.samples.game.common.GameScene
+import com.lehaine.littlekt.samples.game.scenes.PlatformerSampleScene
+import com.lehaine.littlekt.samples.game.scenes.RPGUIScene
+import com.lehaine.littlekt.samples.game.scenes.SelectionScene
 import kotlinx.coroutines.launch
 import kotlin.jvm.Volatile
 import kotlin.reflect.KClass
@@ -58,7 +59,7 @@ class SampleGame(context: Context) : Game<GameScene>(context) {
         }
 
         onPostRender {
-            if(input.isKeyJustPressed(Key.P)) {
+            if (input.isKeyJustPressed(Key.P)) {
                 logger.info { stats }
             }
         }
@@ -77,7 +78,8 @@ class Assets private constructor(context: Context) : Disposable {
     private val sfxFootstep: AudioClip by assets.load(context.resourcesVfs["sfx/footstep0.wav"])
     private val sfxLand: AudioClip by assets.load(context.resourcesVfs["sfx/land0.wav"])
     private val sfxPickup: AudioClip by assets.load(context.resourcesVfs["sfx/pickup0.wav"])
-    private val platformerWorld: LDtkWorld by assets.load(context.resourcesVfs["platformer.ldtk"])
+    private val platformerMapLoader: LDtkMapLoader by assets.load(context.resourcesVfs["platformer.ldtk"])
+    private val platformerWorld: LDtkWorld by assets.prepare { platformerMapLoader.loadMap(false) }
 
     override fun dispose() {
         atlas.dispose()

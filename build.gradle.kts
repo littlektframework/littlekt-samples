@@ -1,4 +1,5 @@
 import com.lehaine.littlekt.gradle.texturepacker.littleKt
+import com.lehaine.littlekt.gradle.texturepacker.packing
 import com.lehaine.littlekt.gradle.texturepacker.texturePacker
 import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
@@ -36,6 +37,9 @@ littleKt {
         inputDir = "art/export_tiles/"
         outputDir = "src/commonMain/resources/"
         outputName = "tiles.atlas"
+        packing {
+            extrude = 2
+        }
     }
 }
 

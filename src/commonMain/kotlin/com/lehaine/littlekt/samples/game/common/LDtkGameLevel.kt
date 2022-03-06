@@ -1,4 +1,4 @@
-package com.lehaine.littlekt.samples.common
+package com.lehaine.littlekt.samples.game.common
 
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkIntGridLayer
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkLevel

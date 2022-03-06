@@ -1,4 +1,4 @@
-package com.lehaine.littlekt.samples.common
+package com.lehaine.littlekt.samples.game.common
 
 import com.lehaine.littlekt.math.castRay
 import com.lehaine.littlekt.math.dist

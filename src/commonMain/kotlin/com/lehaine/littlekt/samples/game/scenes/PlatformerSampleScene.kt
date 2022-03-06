@@ -1,4 +1,4 @@
-package com.lehaine.littlekt.samples.scenes
+package com.lehaine.littlekt.samples.game.scenes
 
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.audio.AudioClip
@@ -10,8 +10,8 @@ import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkLevel
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkWorld
 import com.lehaine.littlekt.input.Input
 import com.lehaine.littlekt.input.Key
-import com.lehaine.littlekt.samples.Assets
-import com.lehaine.littlekt.samples.common.*
+import com.lehaine.littlekt.samples.game.Assets
+import com.lehaine.littlekt.samples.game.common.*
 import com.lehaine.littlekt.util.fastForEach
 import com.lehaine.littlekt.util.viewport.ExtendViewport
 import kotlin.time.Duration

@@ -1,4 +1,4 @@
-package com.lehaine.littlekt.samples.common
+package com.lehaine.littlekt.samples.game.common
 
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.Scene
