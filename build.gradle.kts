@@ -8,7 +8,6 @@ buildscript {
     val littleKtVersion: String by project
     val androidPluginVersion: String by project
     repositories {
-        gradlePluginPortal()
         google()
         mavenLocal()
         mavenCentral()
@@ -31,9 +30,9 @@ group = "com.lehaine.littlekt.samples"
 version = "1.0"
 
 repositories {
+    google()
     mavenLocal()
     mavenCentral()
-    google()
     maven(url ="https://s01.oss.sonatype.org/content/repositories/snapshots/")
     maven(url = "https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
 }

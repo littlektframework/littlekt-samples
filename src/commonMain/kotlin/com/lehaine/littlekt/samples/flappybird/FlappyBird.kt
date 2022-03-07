@@ -4,23 +4,17 @@ import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.ContextListener
 import com.lehaine.littlekt.file.vfs.readAtlas
 import com.lehaine.littlekt.file.vfs.readBitmapFont
-import com.lehaine.littlekt.file.vfs.readTexture
 import com.lehaine.littlekt.graph.node.component.HAlign
 import com.lehaine.littlekt.graph.node.node2d.ui.label
 import com.lehaine.littlekt.graph.sceneGraph
 import com.lehaine.littlekt.graphics.*
 import com.lehaine.littlekt.graphics.gl.ClearBufferMask
+import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.input.Pointer
 import com.lehaine.littlekt.math.Rect
-import com.lehaine.littlekt.math.floorToInt
-import com.lehaine.littlekt.util.MutableTextureAtlas
-import com.lehaine.littlekt.util.Scaler
 import com.lehaine.littlekt.util.calculateViewBounds
 import com.lehaine.littlekt.util.milliseconds
 import com.lehaine.littlekt.util.viewport.ExtendViewport
-import com.lehaine.littlekt.util.viewport.ScalingViewport
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.time.Duration
@@ -34,17 +28,10 @@ class FlappyBird(context: Context) : ContextListener(context) {
     private var started = false
 
     override suspend fun Context.start() {
-        val atlas = MutableTextureAtlas(this).run {
-            add(resourcesVfs["tiles.atlas.json"].readAtlas())
-            val pixelFontBitmap = resourcesVfs["m5x7_16_0.png"].readTexture()
-            add(pixelFontBitmap.slice(), "pixelFont")
-            val immutable = toImmutable()
-            pixelFontBitmap.dispose()
-            immutable
-        }
-        val pixelFont = resourcesVfs["m5x7_16.fnt"].readBitmapFont(preloadedTextures = listOf(atlas["pixelFont"].slice))
-        val pipeHead = atlas.getByPrefix("pipeHead")
-        val pipeBody = atlas.getByPrefix("pipeBody")
+        val atlas = resourcesVfs["tiles.atlas.json"].readAtlas()
+        val pixelFont = resourcesVfs["m5x7_16.fnt"].readBitmapFont(preloadedTextures = listOf(atlas["m5x7_16_0"].slice))
+        val pipeHead = atlas.getByPrefix("pipeHead").slice
+        val pipeBody = atlas.getByPrefix("pipeBody").slice
 
         val batch = SpriteBatch(this)
         val gameCamera = OrthographicCamera(graphics.width, graphics.height).apply {
@@ -68,7 +55,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
 
         val backgrounds = List(7) {
             val bg = atlas.getByPrefix("cityBackground").slice
-            EnvironmentObject(bg, totalToWait = 2).apply {
+            TexturedEnvironmentObject(bg, totalToWait = 2).apply {
                 x = it * bg.width.toFloat() - (bg.width * 2)
             }
         }
@@ -76,9 +63,25 @@ class FlappyBird(context: Context) : ContextListener(context) {
         val groundTiles = List(30) {
             val tileIdx = Random.nextFloat().roundToInt() // using nextFloat to randomize getting 0 or 1 for the tile
             val tile = atlas.getByPrefix("terrainTile$tileIdx").slice
-            EnvironmentObject(tile, totalToWait = 10).apply {
+            TexturedEnvironmentObject(tile, totalToWait = 10).apply {
                 x = it * tile.width.toFloat() - (tile.width * 10)
                 y = 256f - tile.height
+            }
+        }
+
+        val groundHeight = atlas.getByPrefix("terrainTile0").slice.height
+
+        val totalPipesToSpawn = 10
+        val pipes = List(totalPipesToSpawn) {
+            val offset = 100
+            Pipe(
+                pipeHead = pipeHead,
+                pipeBody = pipeBody,
+                offsetX = offset * totalPipesToSpawn,
+                availableHeight = gameCamera.virtualHeight,
+                groundOffset = groundHeight
+            ).apply {
+                x = offset.toFloat() + offset * it
             }
         }
 
@@ -122,12 +125,16 @@ class FlappyBird(context: Context) : ContextListener(context) {
             groundTiles.forEach {
                 it.update(viewBounds)
             }
+            pipes.forEach {
+                it.update(viewBounds)
+            }
 
             gl.clearColor(Color.CLEAR)
             gl.clear(ClearBufferMask.COLOR_BUFFER_BIT)
             batch.use(gameCamera.viewProjection) { batch ->
                 backgrounds.forEach { it.render(batch) }
                 groundTiles.forEach { it.render(batch) }
+                pipes.forEach { it.render(batch) }
                 bird.render(batch)
             }
 
@@ -135,6 +142,11 @@ class FlappyBird(context: Context) : ContextListener(context) {
             ui.render()
         }
 
+        onPostRender {
+            if (input.isKeyJustPressed(Key.P)) {
+                logger.info { stats }
+            }
+        }
         onDispose {
             atlas.dispose()
         }
@@ -174,28 +186,81 @@ private class Bird(flapAnimation: Animation<TextureSlice>) {
     }
 }
 
-private class Pipe() {
-
-    fun update(dt: Duration) {
-
-    }
-
-    fun render() {
-
-    }
-}
-
-private class EnvironmentObject(private val texture: TextureSlice, private val totalToWait: Int) {
+private open class EnvironmentObject(protected val width: Int, protected val totalToWait: Int) {
     var x: Float = 0f
     var y: Float = 0f
 
-    fun update(viewBounds: Rect) {
-        if (x + texture.width + (texture.width * totalToWait) < viewBounds.x) {
+    open fun update(viewBounds: Rect) {
+        if (x + width + (width * totalToWait) < viewBounds.x) {
             x = viewBounds.x2.roundToInt().toFloat()
+            onViewBoundsReset()
         }
     }
+
+    open fun onViewBoundsReset() = Unit
+}
+
+private class TexturedEnvironmentObject(private val texture: TextureSlice, totalToWait: Int) :
+    EnvironmentObject(texture.width, totalToWait) {
 
     fun render(batch: Batch) {
         batch.draw(texture, x, y)
     }
 }
+
+private class Pipe(
+    private val pipeHead: TextureSlice,
+    private val pipeBody: TextureSlice,
+    private val offsetX: Int,
+    private val availableHeight: Int,
+    private val groundOffset: Int
+) :
+    EnvironmentObject(pipeBody.width, 0) {
+    private var pipeTopHeight = 0f
+    private var pipeBottomHeight = 0f
+
+    init {
+        generate()
+    }
+
+    override fun update(viewBounds: Rect) {
+        if (x + width + (width * 2) < viewBounds.x) {
+            x += offsetX
+            onViewBoundsReset()
+        }
+    }
+
+    fun render(batch: Batch) {
+        // draw top pipe
+        batch.draw(pipeBody, x, y, height = pipeTopHeight)
+        batch.draw(pipeHead, x, y + pipeTopHeight, flipY = true)
+
+        // draw bottom pipe
+        batch.draw(
+            slice = pipeBody,
+            x = x,
+            y = y - groundOffset + availableHeight,
+            originY = pipeBottomHeight,
+            height = pipeBottomHeight
+        )
+        batch.draw(
+            slice = pipeHead,
+            x = x,
+            y = y + availableHeight - groundOffset - pipeBottomHeight,
+            originY = pipeHead.height.toFloat()
+        )
+    }
+
+    fun generate() {
+        val pipeSeparationHeight = 50
+        val minPipeHeight = 5
+        val availablePipeHeight = availableHeight - groundOffset - pipeHead.height * 2 - pipeSeparationHeight
+        pipeTopHeight = (minPipeHeight..availablePipeHeight).random().toFloat()
+        pipeBottomHeight = availablePipeHeight - pipeTopHeight
+    }
+
+    override fun onViewBoundsReset() {
+        generate()
+    }
+}
+
