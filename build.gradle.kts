@@ -6,28 +6,34 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 buildscript {
     val littleKtVersion: String by project
+    val androidPluginVersion: String by project
     repositories {
+        gradlePluginPortal()
+        google()
         mavenLocal()
         mavenCentral()
         maven(url ="https://s01.oss.sonatype.org/content/repositories/snapshots/")
     }
     dependencies {
         classpath("com.lehaine.littlekt.gradle:texturepacker:$littleKtVersion")
+        classpath("com.android.tools.build:gradle:$androidPluginVersion")
     }
 }
 
 plugins {
     kotlin("multiplatform") version "1.6.10"
     kotlin("plugin.serialization") version "1.6.10"
+    id("com.android.application") version "7.0.4"
     id("com.lehaine.littlekt.gradle.texturepacker") version "0.2.0-SNAPSHOT"
 }
 
-group = "com.lehaine"
+group = "com.lehaine.littlekt.samples"
 version = "1.0"
 
 repositories {
     mavenLocal()
     mavenCentral()
+    google()
     maven(url ="https://s01.oss.sonatype.org/content/repositories/snapshots/")
     maven(url = "https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
 }
@@ -44,6 +50,7 @@ littleKt {
 }
 
 kotlin {
+    android()
     jvm {
         compilations.all {
             kotlinOptions.jvmTarget = "11"
@@ -96,5 +103,24 @@ kotlin {
 
         }
         val jsTest by getting
+
+        val androidMain by getting {
+            dependencies {
+                implementation("com.lehaine.littlekt:core:$littleKtVersion")
+            }
+        }
+    }
+}
+
+android {
+    sourceSets["main"].apply {
+        manifest.srcFile("src/androidMain/AndroidManifest.xml")
+        assets.srcDirs("src/commonMain/resources")
+    }
+    compileSdk = (findProperty("android.compileSdk") as String).toInt()
+
+    defaultConfig {
+        minSdk = (findProperty("android.minSdk") as String).toInt()
+        targetSdk = (findProperty("android.targetSdk") as String).toInt()
     }
 }
