@@ -10,15 +10,17 @@ import com.lehaine.littlekt.graph.node.node2d.ui.label
 import com.lehaine.littlekt.graph.sceneGraph
 import com.lehaine.littlekt.graphics.*
 import com.lehaine.littlekt.graphics.gl.ClearBufferMask
-import com.lehaine.littlekt.graphics.gl.TexMagFilter
-import com.lehaine.littlekt.graphics.gl.TexMinFilter
 import com.lehaine.littlekt.input.Pointer
 import com.lehaine.littlekt.math.Rect
+import com.lehaine.littlekt.math.floorToInt
 import com.lehaine.littlekt.util.MutableTextureAtlas
+import com.lehaine.littlekt.util.Scaler
 import com.lehaine.littlekt.util.calculateViewBounds
 import com.lehaine.littlekt.util.milliseconds
 import com.lehaine.littlekt.util.viewport.ExtendViewport
-import com.lehaine.littlekt.util.viewport.FitViewport
+import com.lehaine.littlekt.util.viewport.ScalingViewport
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.time.Duration
@@ -46,10 +48,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
 
         val batch = SpriteBatch(this)
         val gameCamera = OrthographicCamera(graphics.width, graphics.height).apply {
-            viewport = FitViewport(135, 256)
-        }
-        val viewCamera = OrthographicCamera(graphics.width, graphics.height).apply {
-            viewport = ExtendViewport(540, 1024)
+            viewport = ExtendViewport(135, 256)
         }
         val viewBounds = Rect()
         val ui = sceneGraph(this, ExtendViewport(270, 480)) {
@@ -62,10 +61,6 @@ class FlappyBird(context: Context) : ContextListener(context) {
                 text = "Press Start"
             }
         }.also { it.initialize() }
-
-        val fbo = FrameBuffer(135, 256, minFilter = TexMinFilter.NEAREST, magFilter = TexMagFilter.NEAREST).also {
-            it.prepare(context)
-        }
 
         val bird = Bird(atlas.getAnimation("bird")).apply {
             y = 256 / 2f
@@ -103,11 +98,12 @@ class FlappyBird(context: Context) : ContextListener(context) {
 
         onResize { width, height ->
             gameCamera.update(width, height, context)
-            viewCamera.update(width, height, context)
             ui.resize(width, height, true)
         }
 
         onRender { dt ->
+            gl.clearColor(Color.CLEAR)
+            gl.clear(ClearBufferMask.COLOR_BUFFER_BIT)
             if (started) {
                 handleGameLogic(dt)
             } else {
@@ -116,6 +112,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
             bird.updateAnim(dt)
 
             gameCamera.position.x = bird.x.roundToInt() + 20f
+            gameCamera.viewport.apply(this)
             gameCamera.update()
             viewBounds.calculateViewBounds(gameCamera)
 
@@ -126,28 +123,12 @@ class FlappyBird(context: Context) : ContextListener(context) {
                 it.update(viewBounds)
             }
 
-            fbo.begin()
             gl.clearColor(Color.CLEAR)
             gl.clear(ClearBufferMask.COLOR_BUFFER_BIT)
             batch.use(gameCamera.viewProjection) { batch ->
                 backgrounds.forEach { it.render(batch) }
                 groundTiles.forEach { it.render(batch) }
                 bird.render(batch)
-            }
-            fbo.end()
-
-            viewCamera.update()
-            gl.clearColor(Color.CLEAR)
-            gl.clear(ClearBufferMask.COLOR_BUFFER_BIT)
-            batch.use(viewCamera.viewProjection) {
-                batch.draw(
-                    fbo.colorBufferTexture,
-                    0f,
-                    0f,
-                    scaleX = 4f,
-                    scaleY = 4f,
-                    flipY = true
-                )
             }
 
             ui.update(dt)
