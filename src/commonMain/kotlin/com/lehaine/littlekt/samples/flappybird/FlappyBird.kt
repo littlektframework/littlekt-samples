@@ -5,7 +5,9 @@ import com.lehaine.littlekt.ContextListener
 import com.lehaine.littlekt.file.vfs.readAtlas
 import com.lehaine.littlekt.file.vfs.readBitmapFont
 import com.lehaine.littlekt.graph.node.component.HAlign
+import com.lehaine.littlekt.graph.node.node2d.ui.TextureRect
 import com.lehaine.littlekt.graph.node.node2d.ui.label
+import com.lehaine.littlekt.graph.node.node2d.ui.textureRect
 import com.lehaine.littlekt.graph.sceneGraph
 import com.lehaine.littlekt.graphics.*
 import com.lehaine.littlekt.graphics.gl.ClearBufferMask
@@ -28,10 +30,13 @@ import kotlin.time.Duration
 class FlappyBird(context: Context) : ContextListener(context) {
 
     private var started = false
+    private var gameOver = false
+    private var score = 0
 
     override suspend fun Context.start() {
         val atlas = resourcesVfs["tiles.atlas.json"].readAtlas()
-        val pixelFont = resourcesVfs["m5x7_16.fnt"].readBitmapFont(preloadedTextures = listOf(atlas["m5x7_16_0"].slice))
+        val pixelFont =
+            resourcesVfs["m5x7_16_outline.fnt"].readBitmapFont(preloadedTextures = listOf(atlas["m5x7_16_outline_0"].slice))
         val pipeHead = atlas.getByPrefix("pipeHead").slice
         val pipeBody = atlas.getByPrefix("pipeBody").slice
 
@@ -40,15 +45,39 @@ class FlappyBird(context: Context) : ContextListener(context) {
             viewport = ExtendViewport(135, 256)
         }
         val viewBounds = Rect()
-        val ui = sceneGraph(this, ExtendViewport(270, 480)) {
+        val ui = sceneGraph(this, ExtendViewport(135, 256)) {
             label {
                 anchorRight = 1f
-                anchorTop = 0.2f
-                horizontalAlign = HAlign.CENTER
+                anchorTop = 0.10f
+                text = "0"
                 font = pixelFont
-                fontColor = Color.BLACK
-                text = "Press Start"
+                horizontalAlign = HAlign.CENTER
+
+                onUpdate += {
+                    visible = !gameOver && started
+                    text = "$score"
+                }
             }
+            textureRect {
+                anchorRight = 1f
+                anchorTop = 0.2f
+                stretchMode = TextureRect.StretchMode.KEEP_CENTERED
+                slice = atlas.getByPrefix("gameOverText").slice
+                onUpdate += {
+                    visible = gameOver
+                }
+            }
+
+            textureRect {
+                anchorRight = 1f
+                anchorTop = 0.2f
+                stretchMode = TextureRect.StretchMode.KEEP_CENTERED
+                slice = atlas.getByPrefix("getReadyText").slice
+                onUpdate += {
+                    visible = !gameOver && !started
+                }
+            }
+
         }.also { it.initialize() }
 
         val bird = Bird(atlas.getAnimation("bird"), 12f, 10f).apply {
@@ -62,7 +91,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
             }
         }
 
-        val groundTiles = List(30) {
+        val groundTiles = List(35) {
             val tileIdx = Random.nextFloat().roundToInt() // using nextFloat to randomize getting 0 or 1 for the tile
             val tile = atlas.getByPrefix("terrainTile$tileIdx").slice
             TexturedEnvironmentObject(tile, totalToWait = 10, hasCollision = true).apply {
@@ -74,16 +103,49 @@ class FlappyBird(context: Context) : ContextListener(context) {
         val groundHeight = atlas.getByPrefix("terrainTile0").slice.height
 
         val totalPipesToSpawn = 10
+        val pipeOffset = 100
         val pipes = List(totalPipesToSpawn) {
-            val offset = 100
             Pipe(
                 pipeHead = pipeHead,
                 pipeBody = pipeBody,
-                offsetX = offset * totalPipesToSpawn,
+                offsetX = pipeOffset * totalPipesToSpawn,
                 availableHeight = gameCamera.virtualHeight,
                 groundOffset = groundHeight
             ).apply {
-                x = offset.toFloat() + offset * it
+                x = pipeOffset.toFloat() + pipeOffset * it
+            }
+        }
+
+        fun reset() {
+            started = false
+            gameOver = false
+            score = 0
+
+            gameCamera.position.x = 0f
+            bird.x = 0f
+            bird.y = 256 / 2f
+            bird.update(Duration.ZERO)
+            bird.speedMultiplier = 1f
+            bird.gravityMultiplier = 1f
+
+            backgrounds.forEachIndexed { index, bg ->
+                bg.apply {
+                    x = index * texture.width.toFloat() - (texture.width * 2)
+                }
+            }
+
+            groundTiles.forEachIndexed { index, tile ->
+                tile.apply {
+                    x = index * texture.width.toFloat() - (texture.width * 10)
+                    y = 256f - texture.height
+                }
+            }
+
+            pipes.forEachIndexed { index, pipe ->
+                pipe.apply {
+                    x = pipeOffset.toFloat() + pipeOffset * index
+                    generate()
+                }
             }
         }
 
@@ -91,8 +153,12 @@ class FlappyBird(context: Context) : ContextListener(context) {
             run pipeCollisionCheck@{
                 pipes.forEach {
                     if (it.isColliding(bird.collider)) {
-                        bird.speed = 0f
+                        bird.speedMultiplier = 0f
+                        gameOver = true
                         return@pipeCollisionCheck
+                    } else if(it.intersectingScore(bird.collider)) {
+                        it.collect()
+                        score++
                     }
                 }
             }
@@ -101,15 +167,24 @@ class FlappyBird(context: Context) : ContextListener(context) {
                 groundTiles.forEach {
                     if (it.isColliding(bird.collider)) {
                         bird.gravityMultiplier = 0f
-                        bird.speed = 0f
+                        bird.speedMultiplier = 0f
+                        gameOver = true
                         return@groundCollisionCheck
                     }
                 }
             }
 
             bird.update(dt)
-            if (input.isJustTouched(Pointer.POINTER1)) {
-                bird.flap()
+
+            if (gameOver) {
+                if (input.isJustTouched(Pointer.POINTER1)) {
+                    reset()
+                }
+
+            } else {
+                if (input.isJustTouched(Pointer.POINTER1)) {
+                    bird.flap()
+                }
             }
         }
 
@@ -118,7 +193,6 @@ class FlappyBird(context: Context) : ContextListener(context) {
                 started = true
             }
         }
-
 
         onResize { width, height ->
             gameCamera.update(width, height, context)
@@ -166,6 +240,10 @@ class FlappyBird(context: Context) : ContextListener(context) {
             if (input.isKeyJustPressed(Key.P)) {
                 logger.info { stats }
             }
+
+            if (input.isKeyJustPressed(Key.R)) {
+                reset()
+            }
         }
         onDispose {
             atlas.dispose()
@@ -177,8 +255,9 @@ class FlappyBird(context: Context) : ContextListener(context) {
 private class Bird(flapAnimation: Animation<TextureSlice>, var width: Float, var height: Float) {
     var x = 0f
     var y = 0f
-    var speed = 0.06f
-    val gravity = 0.014f
+    val speed = 0.06f
+    val gravity = 0.018f
+    var speedMultiplier = 1f
     var gravityMultiplier = 1f
     val flapHeight = -0.7f
     private val velocity = MutableVec2f(0f)
@@ -193,7 +272,7 @@ private class Bird(flapAnimation: Animation<TextureSlice>, var width: Float, var
     val collider = Rect(x - width * 0.5f - height * 0.5f, y, width, height)
 
     fun update(dt: Duration) {
-        velocity.x = speed
+        velocity.x = speed * speedMultiplier
         velocity.y += gravity * gravityMultiplier
 
         x += velocity.x * dt.milliseconds
@@ -236,7 +315,7 @@ private open class EnvironmentObject(
     open fun isColliding(rect: Rect) = false
 }
 
-private class TexturedEnvironmentObject(private val texture: TextureSlice, totalToWait: Int, hasCollision: Boolean) :
+private class TexturedEnvironmentObject(val texture: TextureSlice, totalToWait: Int, hasCollision: Boolean) :
     EnvironmentObject(texture.width, totalToWait, hasCollision) {
 
     fun render(batch: Batch) {
@@ -269,6 +348,11 @@ private class Pipe(
     private val bottomPipeBodyRect = Rect()
     private val bottomPipeHeadRect = Rect()
 
+    private val scoreRect = Rect()
+
+    private val pipeSeparationHeight = 75
+    private var collected = false
+
     init {
         generate()
     }
@@ -294,6 +378,8 @@ private class Pipe(
             pipeHead.width.toFloat(),
             pipeHead.height.toFloat()
         )
+
+        scoreRect.set(x + 5f, y + pipeTopHeight + pipeHead.height.toFloat(), 5f, pipeSeparationHeight.toFloat())
     }
 
     fun render(batch: Batch) {
@@ -317,12 +403,18 @@ private class Pipe(
         )
     }
 
+    fun intersectingScore(rect: Rect) = !collected && scoreRect.intersects(rect)
+
+    fun collect() {
+        collected = true
+    }
+
     fun generate() {
-        val pipeSeparationHeight = 75
         val minPipeHeight = 5
         val availablePipeHeight = availableHeight - groundOffset - pipeHead.height * 2 - pipeSeparationHeight
         pipeTopHeight = (minPipeHeight..availablePipeHeight).random().toFloat()
         pipeBottomHeight = availablePipeHeight - pipeTopHeight
+        collected = false
     }
 
     override fun onViewBoundsReset() {
