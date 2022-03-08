@@ -11,10 +11,12 @@ import com.lehaine.littlekt.graphics.*
 import com.lehaine.littlekt.graphics.gl.ClearBufferMask
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.input.Pointer
+import com.lehaine.littlekt.math.MutableVec2f
 import com.lehaine.littlekt.math.Rect
 import com.lehaine.littlekt.util.calculateViewBounds
 import com.lehaine.littlekt.util.milliseconds
 import com.lehaine.littlekt.util.viewport.ExtendViewport
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.time.Duration
@@ -49,13 +51,13 @@ class FlappyBird(context: Context) : ContextListener(context) {
             }
         }.also { it.initialize() }
 
-        val bird = Bird(atlas.getAnimation("bird")).apply {
+        val bird = Bird(atlas.getAnimation("bird"), 12f, 10f).apply {
             y = 256 / 2f
         }
 
         val backgrounds = List(7) {
             val bg = atlas.getByPrefix("cityBackground").slice
-            TexturedEnvironmentObject(bg, totalToWait = 2).apply {
+            TexturedEnvironmentObject(bg, totalToWait = 2, hasCollision = false).apply {
                 x = it * bg.width.toFloat() - (bg.width * 2)
             }
         }
@@ -63,7 +65,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
         val groundTiles = List(30) {
             val tileIdx = Random.nextFloat().roundToInt() // using nextFloat to randomize getting 0 or 1 for the tile
             val tile = atlas.getByPrefix("terrainTile$tileIdx").slice
-            TexturedEnvironmentObject(tile, totalToWait = 10).apply {
+            TexturedEnvironmentObject(tile, totalToWait = 10, hasCollision = true).apply {
                 x = it * tile.width.toFloat() - (tile.width * 10)
                 y = 256f - tile.height
             }
@@ -86,7 +88,26 @@ class FlappyBird(context: Context) : ContextListener(context) {
         }
 
         fun handleGameLogic(dt: Duration) {
-            bird.move(dt)
+            run pipeCollisionCheck@{
+                pipes.forEach {
+                    if (it.isColliding(bird.collider)) {
+                        bird.speed = 0f
+                        return@pipeCollisionCheck
+                    }
+                }
+            }
+
+            run groundCollisionCheck@{
+                groundTiles.forEach {
+                    if (it.isColliding(bird.collider)) {
+                        bird.gravityMultiplier = 0f
+                        bird.speed = 0f
+                        return@groundCollisionCheck
+                    }
+                }
+            }
+
+            bird.update(dt)
             if (input.isJustTouched(Pointer.POINTER1)) {
                 bird.flap()
             }
@@ -112,7 +133,6 @@ class FlappyBird(context: Context) : ContextListener(context) {
             } else {
                 handleStartMenu()
             }
-            bird.updateAnim(dt)
 
             gameCamera.position.x = bird.x.roundToInt() + 20f
             gameCamera.viewport.apply(this)
@@ -154,12 +174,14 @@ class FlappyBird(context: Context) : ContextListener(context) {
 
 }
 
-private class Bird(flapAnimation: Animation<TextureSlice>) {
+private class Bird(flapAnimation: Animation<TextureSlice>, var width: Float, var height: Float) {
     var x = 0f
     var y = 0f
-    val speed = 0.05f
-    val gravity = 0.5f
-    val flapPower = 5f
+    var speed = 0.06f
+    val gravity = 0.014f
+    var gravityMultiplier = 1f
+    val flapHeight = -0.7f
+    private val velocity = MutableVec2f(0f)
     private var sprite = flapAnimation.firstFrame
     val animationPlayer = AnimationPlayer<TextureSlice>().apply {
         onFrameChange = {
@@ -168,25 +190,37 @@ private class Bird(flapAnimation: Animation<TextureSlice>) {
         playLooped(flapAnimation)
     }
 
-    fun move(dt: Duration) {
-        x += speed * dt.milliseconds
-        //   y += gravity
-    }
+    val collider = Rect(x - width * 0.5f - height * 0.5f, y, width, height)
 
-    fun updateAnim(dt: Duration) {
+    fun update(dt: Duration) {
+        velocity.x = speed
+        velocity.y += gravity * gravityMultiplier
+
+        x += velocity.x * dt.milliseconds
+        y += velocity.y * dt.milliseconds
         animationPlayer.update(dt)
+
+        velocity.y *= 0.91f
+        if (abs(velocity.y) <= 0.0005f) {
+            velocity.y = 0f
+        }
+        collider.set(x - width * 0.5f, y - height * 0.5f, width, height)
     }
 
     fun render(batch: Batch) {
-        batch.draw(sprite, x, y, 8f, 8f)
+        batch.draw(sprite, x, y, sprite.width * 0.5f, sprite.height * 0.5f)
     }
 
     fun flap() {
-        y -= flapPower
+        velocity.y = flapHeight
     }
 }
 
-private open class EnvironmentObject(protected val width: Int, protected val totalToWait: Int) {
+private open class EnvironmentObject(
+    protected val width: Int,
+    protected val totalToWait: Int,
+    protected val hasCollision: Boolean,
+) {
     var x: Float = 0f
     var y: Float = 0f
 
@@ -198,13 +232,24 @@ private open class EnvironmentObject(protected val width: Int, protected val tot
     }
 
     open fun onViewBoundsReset() = Unit
+
+    open fun isColliding(rect: Rect) = false
 }
 
-private class TexturedEnvironmentObject(private val texture: TextureSlice, totalToWait: Int) :
-    EnvironmentObject(texture.width, totalToWait) {
+private class TexturedEnvironmentObject(private val texture: TextureSlice, totalToWait: Int, hasCollision: Boolean) :
+    EnvironmentObject(texture.width, totalToWait, hasCollision) {
 
     fun render(batch: Batch) {
         batch.draw(texture, x, y)
+    }
+
+    override fun isColliding(rect: Rect): Boolean {
+        return if (hasCollision) rect.intersects(
+            x,
+            y,
+            x + texture.width.toFloat(),
+            y + texture.height.toFloat()
+        ) else false
     }
 }
 
@@ -214,10 +259,15 @@ private class Pipe(
     private val offsetX: Int,
     private val availableHeight: Int,
     private val groundOffset: Int
-) :
-    EnvironmentObject(pipeBody.width, 0) {
+) : EnvironmentObject(pipeBody.width, 0, true) {
     private var pipeTopHeight = 0f
     private var pipeBottomHeight = 0f
+
+    private val topPipeBodyRect = Rect()
+    private val topPipeHeadRect = Rect()
+
+    private val bottomPipeBodyRect = Rect()
+    private val bottomPipeHeadRect = Rect()
 
     init {
         generate()
@@ -228,6 +278,22 @@ private class Pipe(
             x += offsetX
             onViewBoundsReset()
         }
+
+        topPipeBodyRect.set(x, y, pipeBody.width.toFloat(), pipeTopHeight)
+        topPipeHeadRect.set(x, y + pipeTopHeight, pipeHead.width.toFloat(), pipeHead.height.toFloat())
+
+        bottomPipeBodyRect.set(
+            x,
+            y - groundOffset + availableHeight + pipeBottomHeight,
+            pipeBody.width.toFloat(),
+            pipeBottomHeight
+        )
+        bottomPipeHeadRect.set(
+            x,
+            y + availableHeight - groundOffset - pipeBottomHeight + pipeHead.height.toFloat(),
+            pipeHead.width.toFloat(),
+            pipeHead.height.toFloat()
+        )
     }
 
     fun render(batch: Batch) {
@@ -252,7 +318,7 @@ private class Pipe(
     }
 
     fun generate() {
-        val pipeSeparationHeight = 50
+        val pipeSeparationHeight = 75
         val minPipeHeight = 5
         val availablePipeHeight = availableHeight - groundOffset - pipeHead.height * 2 - pipeSeparationHeight
         pipeTopHeight = (minPipeHeight..availablePipeHeight).random().toFloat()
@@ -261,6 +327,17 @@ private class Pipe(
 
     override fun onViewBoundsReset() {
         generate()
+    }
+
+    override fun isColliding(rect: Rect): Boolean {
+        return if (hasCollision) {
+            topPipeBodyRect.intersects(rect) || topPipeHeadRect.intersects(rect)
+                    || bottomPipeBodyRect.intersects(rect) || bottomPipeHeadRect.intersects(
+                rect
+            )
+        } else {
+            false
+        }
     }
 }
 
