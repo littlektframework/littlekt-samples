@@ -96,8 +96,6 @@ class FlappyBird(context: Context) : ContextListener(context) {
             }
         }
 
-        var timeScale = 1f
-
         fun reset() {
             started = false
             gameOver = false
@@ -356,9 +354,8 @@ class FlappyBird(context: Context) : ContextListener(context) {
             gl.clearColor(Color.CLEAR)
             gl.clear(ClearBufferMask.COLOR_BUFFER_BIT)
 
-            val scaledDt = (dt.milliseconds * timeScale).milliseconds
             if (started && !paused) {
-                handleGameLogic(scaledDt)
+                handleGameLogic(dt)
             } else {
                 handleStartMenu()
             }
