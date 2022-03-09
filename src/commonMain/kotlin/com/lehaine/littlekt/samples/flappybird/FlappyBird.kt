@@ -36,6 +36,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
     private var started = false
     private var gameOver = false
     private var score = 0
+    private var best = 0
     private var paused = false
 
     override suspend fun Context.start() {
@@ -184,7 +185,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
                         horizontalAlign = HAlign.CENTER
 
                         onUpdate += {
-                            text = "Best Score: $score"
+                            text = "Best Score: $best"
                         }
                     }
                 }
@@ -290,6 +291,13 @@ class FlappyBird(context: Context) : ContextListener(context) {
 
         }.also { it.initialize() }
 
+        fun saveScore() {
+            best = vfs.loadString("best")?.toInt() ?: 0
+            if (score > best) {
+                vfs.store("best", score.toString())
+                best = score
+            }
+        }
 
         fun handleGameLogic(dt: Duration) {
             run pipeCollisionCheck@{
@@ -297,6 +305,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
                     if (it.isColliding(bird.collider)) {
                         bird.speedMultiplier = 0f
                         gameOver = true
+                        saveScore()
                         return@pipeCollisionCheck
                     } else if (it.intersectingScore(bird.collider)) {
                         KtScope.launch(audioCtx) {
@@ -314,6 +323,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
                         bird.gravityMultiplier = 0f
                         bird.speedMultiplier = 0f
                         gameOver = true
+                        saveScore()
                         return@groundCollisionCheck
                     }
                 }
@@ -332,7 +342,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
         }
 
         fun handleStartMenu() {
-            if (context.input.isJustTouched(Pointer.POINTER1)) {
+            if (input.isJustTouched(Pointer.POINTER1)) {
                 started = true
             }
         }
