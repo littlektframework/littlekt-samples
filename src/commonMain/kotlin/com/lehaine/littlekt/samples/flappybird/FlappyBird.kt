@@ -347,6 +347,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
         }
 
         onResize { width, height ->
+            println("${graphics.width},${graphics.height}")
             gameCamera.update(width, height, context)
             ui.resize(width, height, true)
         }
