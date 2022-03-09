@@ -105,8 +105,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
             bird.x = 0f
             bird.y = 256 / 2f
             bird.update(Duration.ZERO)
-            bird.speedMultiplier = 1f
-            bird.gravityMultiplier = 1f
+            bird.reset()
 
             backgrounds.forEachIndexed { index, bg ->
                 bg.apply {
@@ -318,8 +317,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
             run groundCollisionCheck@{
                 groundTiles.forEach {
                     if (it.isColliding(bird.collider)) {
-                        bird.gravityMultiplier = 0f
-                        bird.speedMultiplier = 0f
+                        bird.die()
                         gameOver = true
                         saveScore()
                         return@groundCollisionCheck
@@ -328,6 +326,9 @@ class FlappyBird(context: Context) : ContextListener(context) {
             }
 
             bird.update(dt)
+            if (bird.y < 0) {
+                bird.y = 0f
+            }
 
             if (!gameOver) {
                 if (input.isJustTouched(Pointer.POINTER1)) {
@@ -404,7 +405,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
 
 }
 
-private class Bird(flapAnimation: Animation<TextureSlice>, var width: Float, var height: Float) {
+private class Bird(private val flapAnimation: Animation<TextureSlice>, var width: Float, var height: Float) {
     var x = 0f
     var y = 0f
     val speed = 0.06f
@@ -444,6 +445,20 @@ private class Bird(flapAnimation: Animation<TextureSlice>, var width: Float, var
 
     fun flap() {
         velocity.y = flapHeight
+    }
+
+    fun die() {
+        velocity.y = 0f
+        velocity.x = 0f
+        gravityMultiplier = 0f
+        speedMultiplier = 0f
+        animationPlayer.stop()
+    }
+
+    fun reset() {
+        gravityMultiplier = 1f
+        speedMultiplier = 1f
+        animationPlayer.playLooped(flapAnimation)
     }
 }
 
@@ -520,13 +535,13 @@ private class Pipe(
 
         bottomPipeBodyRect.set(
             x,
-            y - groundOffset + availableHeight + pipeBottomHeight,
+            y - groundOffset + availableHeight,
             pipeBody.width.toFloat(),
             pipeBottomHeight
         )
         bottomPipeHeadRect.set(
             x,
-            y + availableHeight - groundOffset - pipeBottomHeight + pipeHead.height.toFloat(),
+            y + availableHeight - groundOffset - pipeBottomHeight - pipeHead.height.toFloat(),
             pipeHead.width.toFloat(),
             pipeHead.height.toFloat()
         )
@@ -576,9 +591,7 @@ private class Pipe(
     override fun isColliding(rect: Rect): Boolean {
         return if (hasCollision) {
             topPipeBodyRect.intersects(rect) || topPipeHeadRect.intersects(rect)
-                    || bottomPipeBodyRect.intersects(rect) || bottomPipeHeadRect.intersects(
-                rect
-            )
+                    || bottomPipeBodyRect.intersects(rect) || bottomPipeHeadRect.intersects(rect)
         } else {
             false
         }
