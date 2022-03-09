@@ -2,12 +2,15 @@ package com.lehaine.littlekt.samples.flappybird
 
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.ContextListener
+import com.lehaine.littlekt.async.KtScope
+import com.lehaine.littlekt.async.newSingleThreadAsyncContext
 import com.lehaine.littlekt.file.vfs.readAtlas
+import com.lehaine.littlekt.file.vfs.readAudioClip
 import com.lehaine.littlekt.file.vfs.readBitmapFont
 import com.lehaine.littlekt.graph.node.component.HAlign
-import com.lehaine.littlekt.graph.node.node2d.ui.TextureRect
-import com.lehaine.littlekt.graph.node.node2d.ui.label
-import com.lehaine.littlekt.graph.node.node2d.ui.textureRect
+import com.lehaine.littlekt.graph.node.component.InputEvent
+import com.lehaine.littlekt.graph.node.component.NinePatchDrawable
+import com.lehaine.littlekt.graph.node.node2d.ui.*
 import com.lehaine.littlekt.graph.sceneGraph
 import com.lehaine.littlekt.graphics.*
 import com.lehaine.littlekt.graphics.gl.ClearBufferMask
@@ -18,6 +21,7 @@ import com.lehaine.littlekt.math.Rect
 import com.lehaine.littlekt.util.calculateViewBounds
 import com.lehaine.littlekt.util.milliseconds
 import com.lehaine.littlekt.util.viewport.ExtendViewport
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -32,6 +36,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
     private var started = false
     private var gameOver = false
     private var score = 0
+    private var paused = false
 
     override suspend fun Context.start() {
         val atlas = resourcesVfs["tiles.atlas.json"].readAtlas()
@@ -39,46 +44,20 @@ class FlappyBird(context: Context) : ContextListener(context) {
             resourcesVfs["m5x7_16_outline.fnt"].readBitmapFont(preloadedTextures = listOf(atlas["m5x7_16_outline_0"].slice))
         val pipeHead = atlas.getByPrefix("pipeHead").slice
         val pipeBody = atlas.getByPrefix("pipeBody").slice
+        val pauseSlice = atlas.getByPrefix("pauseButton").slice
+        val resumeSlice = atlas.getByPrefix("resumeButton").slice
+        val startButton = atlas.getByPrefix("startButton").slice
+        val panel9Slice = atlas.getByPrefix("panel_9").slice
+
+        val audioCtx = newSingleThreadAsyncContext()
+        val flapSfx = resourcesVfs["sfx/flap.wav"].readAudioClip()
+        val scoreSfx = resourcesVfs["sfx/coinPickup0.wav"].readAudioClip()
 
         val batch = SpriteBatch(this)
         val gameCamera = OrthographicCamera(graphics.width, graphics.height).apply {
             viewport = ExtendViewport(135, 256)
         }
         val viewBounds = Rect()
-        val ui = sceneGraph(this, ExtendViewport(135, 256)) {
-            label {
-                anchorRight = 1f
-                anchorTop = 0.10f
-                text = "0"
-                font = pixelFont
-                horizontalAlign = HAlign.CENTER
-
-                onUpdate += {
-                    visible = !gameOver && started
-                    text = "$score"
-                }
-            }
-            textureRect {
-                anchorRight = 1f
-                anchorTop = 0.2f
-                stretchMode = TextureRect.StretchMode.KEEP_CENTERED
-                slice = atlas.getByPrefix("gameOverText").slice
-                onUpdate += {
-                    visible = gameOver
-                }
-            }
-
-            textureRect {
-                anchorRight = 1f
-                anchorTop = 0.2f
-                stretchMode = TextureRect.StretchMode.KEEP_CENTERED
-                slice = atlas.getByPrefix("getReadyText").slice
-                onUpdate += {
-                    visible = !gameOver && !started
-                }
-            }
-
-        }.also { it.initialize() }
 
         val bird = Bird(atlas.getAnimation("bird"), 12f, 10f).apply {
             y = 256 / 2f
@@ -116,6 +95,8 @@ class FlappyBird(context: Context) : ContextListener(context) {
             }
         }
 
+        var timeScale = 1f
+
         fun reset() {
             started = false
             gameOver = false
@@ -149,6 +130,167 @@ class FlappyBird(context: Context) : ContextListener(context) {
             }
         }
 
+        val ui = sceneGraph(this, ExtendViewport(135, 256)) {
+            textureRect {
+                x = 10f
+                y = 10f
+                slice = pauseSlice
+
+                onUpdate += {
+                    visible = !gameOver && started && !paused
+                }
+
+                onUiInput += uiInput@{
+                    if (!gameOver && started && !paused) {
+                        if (it.type == InputEvent.Type.TOUCH_DOWN) {
+                            paused = true
+                            it.handle()
+                        }
+                    }
+                }
+            }
+
+            panel {
+                name = "Score Container"
+
+                panel = NinePatchDrawable(NinePatch(panel9Slice, 2, 2, 2, 4))
+
+                anchorLeft = 0.1f
+                anchorRight = 0.9f
+                anchorTop = 0.3f
+                anchorBottom = 0.8f
+
+                onUpdate += {
+                    visible = gameOver
+                }
+
+                vBoxContainer {
+                    separation = 10
+                    marginTop = 5f
+                    anchorRight = 1f
+                    anchorBottom = 1f
+
+                    label {
+                        font = pixelFont
+                        horizontalAlign = HAlign.CENTER
+
+                        onUpdate += {
+                            text = "Score: $score"
+                        }
+                    }
+
+                    label {
+                        font = pixelFont
+                        horizontalAlign = HAlign.CENTER
+
+                        onUpdate += {
+                            text = "Best Score: $score"
+                        }
+                    }
+                }
+
+                textureRect {
+                    anchorTop = 1f
+                    anchorBottom = 1f
+                    anchorRight = 1f
+
+                    marginTop = -50f
+                    slice = startButton
+                    stretchMode = TextureRect.StretchMode.KEEP_CENTERED
+
+                    onUiInput += {
+                        if (gameOver) {
+                            if (it.type == InputEvent.Type.TOUCH_DOWN) {
+                                reset()
+                            }
+                        }
+                    }
+                }
+            }
+
+            centerContainer {
+                anchorRight = 1f
+                anchorBottom = 1f
+                onUpdate += {
+                    visible = paused
+                }
+
+                vBoxContainer {
+                    separation = 10
+
+                    label {
+                        text = "Tap to Resume"
+                        font = pixelFont
+                        horizontalAlign = HAlign.CENTER
+                    }
+
+                    textureRect {
+                        slice = resumeSlice
+                        stretchMode = TextureRect.StretchMode.KEEP_CENTERED
+                        onUiInput += uiInput@{
+                            if (paused) {
+                                if (it.type == InputEvent.Type.TOUCH_DOWN) {
+                                    paused = false
+                                    it.handle()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            textureRect {
+                x = 10f
+                y = 10f
+                slice = pauseSlice
+
+                onUpdate += {
+                    visible = !gameOver && started && !paused
+                }
+
+                onUiInput += {
+                    println(it.type)
+                    if (it.type == InputEvent.Type.TOUCH_DOWN) {
+                        paused = !paused
+                        it.handle()
+                    }
+                }
+            }
+            label {
+                anchorRight = 1f
+                anchorTop = 0.10f
+                text = "0"
+                font = pixelFont
+                horizontalAlign = HAlign.CENTER
+
+                onUpdate += {
+                    visible = !gameOver && started
+                    text = "$score"
+                }
+            }
+            textureRect {
+                anchorRight = 1f
+                anchorTop = 0.2f
+                stretchMode = TextureRect.StretchMode.KEEP_CENTERED
+                slice = atlas.getByPrefix("gameOverText").slice
+                onUpdate += {
+                    visible = gameOver
+                }
+            }
+
+            textureRect {
+                anchorRight = 1f
+                anchorTop = 0.2f
+                stretchMode = TextureRect.StretchMode.KEEP_CENTERED
+                slice = atlas.getByPrefix("getReadyText").slice
+                onUpdate += {
+                    visible = !gameOver && !started
+                }
+            }
+
+        }.also { it.initialize() }
+
+
         fun handleGameLogic(dt: Duration) {
             run pipeCollisionCheck@{
                 pipes.forEach {
@@ -156,7 +298,10 @@ class FlappyBird(context: Context) : ContextListener(context) {
                         bird.speedMultiplier = 0f
                         gameOver = true
                         return@pipeCollisionCheck
-                    } else if(it.intersectingScore(bird.collider)) {
+                    } else if (it.intersectingScore(bird.collider)) {
+                        KtScope.launch(audioCtx) {
+                            scoreSfx.play(0.5f)
+                        }
                         it.collect()
                         score++
                     }
@@ -176,14 +321,12 @@ class FlappyBird(context: Context) : ContextListener(context) {
 
             bird.update(dt)
 
-            if (gameOver) {
-                if (input.isJustTouched(Pointer.POINTER1)) {
-                    reset()
-                }
-
-            } else {
+            if (!gameOver) {
                 if (input.isJustTouched(Pointer.POINTER1)) {
                     bird.flap()
+                    KtScope.launch(audioCtx) {
+                        flapSfx.play()
+                    }
                 }
             }
         }
@@ -202,8 +345,10 @@ class FlappyBird(context: Context) : ContextListener(context) {
         onRender { dt ->
             gl.clearColor(Color.CLEAR)
             gl.clear(ClearBufferMask.COLOR_BUFFER_BIT)
-            if (started) {
-                handleGameLogic(dt)
+
+            val scaledDt = (dt.milliseconds * timeScale).milliseconds
+            if (started && !paused) {
+                handleGameLogic(scaledDt)
             } else {
                 handleStartMenu()
             }
