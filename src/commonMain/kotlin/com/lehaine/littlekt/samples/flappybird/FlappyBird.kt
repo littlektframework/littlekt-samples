@@ -10,7 +10,7 @@ import com.lehaine.littlekt.file.vfs.readBitmapFont
 import com.lehaine.littlekt.graph.node.component.HAlign
 import com.lehaine.littlekt.graph.node.component.InputEvent
 import com.lehaine.littlekt.graph.node.component.NinePatchDrawable
-import com.lehaine.littlekt.graph.node.node2d.ui.*
+import com.lehaine.littlekt.graph.node.ui.*
 import com.lehaine.littlekt.graph.sceneGraph
 import com.lehaine.littlekt.graphics.*
 import com.lehaine.littlekt.graphics.gl.ClearBufferMask
@@ -55,9 +55,8 @@ class FlappyBird(context: Context) : ContextListener(context) {
         val scoreSfx = resourcesVfs["sfx/coinPickup0.wav"].readAudioClip()
 
         val batch = SpriteBatch(this)
-        val gameCamera = OrthographicCamera(graphics.width, graphics.height).apply {
-            viewport = ExtendViewport(135, 256)
-        }
+        val gameViewport = ExtendViewport(135, 256)
+        val gameCamera = gameViewport.camera
         val viewBounds = Rect()
 
         val bird = Bird(atlas.getAnimation("bird"), 12f, 10f).apply {
@@ -89,7 +88,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
                 pipeHead = pipeHead,
                 pipeBody = pipeBody,
                 offsetX = pipeOffset * totalPipesToSpawn,
-                availableHeight = gameCamera.virtualHeight,
+                availableHeight = gameViewport.virtualHeight.toInt(),
                 groundOffset = groundHeight
             ).apply {
                 x = pipeOffset.toFloat() + pipeOffset * it
@@ -348,7 +347,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
 
         onResize { width, height ->
             println("${graphics.width},${graphics.height}")
-            gameCamera.update(width, height, context)
+            gameViewport.update(width, height, context, true)
             ui.resize(width, height, true)
         }
 
@@ -363,7 +362,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
             }
 
             gameCamera.position.x = bird.x.roundToInt() + 20f
-            gameCamera.viewport.apply(this)
+            gameViewport.apply(this)
             gameCamera.update()
             viewBounds.calculateViewBounds(gameCamera)
 

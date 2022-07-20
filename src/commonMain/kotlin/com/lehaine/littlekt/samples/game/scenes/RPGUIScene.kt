@@ -4,7 +4,7 @@ import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.graph.node.component.HAlign
 import com.lehaine.littlekt.graph.node.component.NinePatchDrawable
 import com.lehaine.littlekt.graph.node.component.VAlign
-import com.lehaine.littlekt.graph.node.node2d.ui.*
+import com.lehaine.littlekt.graph.node.ui.*
 import com.lehaine.littlekt.graph.sceneGraph
 import com.lehaine.littlekt.graphics.Color
 import com.lehaine.littlekt.graphics.NinePatch
@@ -195,10 +195,12 @@ class RPGUIScene(
                     }
                 }
             }
-        }.also { it.initialize() }
+        }
 
 
     override suspend fun Context.show() {
+        graph.initialize()
+        graph.resize(graphics.width, graphics.height, true)
         graph.root.enabled = true
     }
 

@@ -2,10 +2,10 @@ package com.lehaine.littlekt.samples.game.scenes
 
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.async.KtScope
-import com.lehaine.littlekt.graph.node.node2d.ui.button
-import com.lehaine.littlekt.graph.node.node2d.ui.centerContainer
-import com.lehaine.littlekt.graph.node.node2d.ui.label
-import com.lehaine.littlekt.graph.node.node2d.ui.vBoxContainer
+import com.lehaine.littlekt.graph.node.ui.button
+import com.lehaine.littlekt.graph.node.ui.centerContainer
+import com.lehaine.littlekt.graph.node.ui.label
+import com.lehaine.littlekt.graph.node.ui.vBoxContainer
 import com.lehaine.littlekt.graph.sceneGraph
 import com.lehaine.littlekt.graphics.SpriteBatch
 import com.lehaine.littlekt.graphics.gl.ClearBufferMask
@@ -24,6 +24,7 @@ class SelectionScene(
     private val onSelection: suspend (KClass<out GameScene>) -> Unit,
     context: Context
 ) : GameScene(context) {
+
     private val graph = sceneGraph(context, FitViewport(960, 540), batch = batch) {
         centerContainer {
             anchorRight = 1f
@@ -63,9 +64,11 @@ class SelectionScene(
                 }
             }
         }
-    }.also { it.initialize() }
+    }
 
     override suspend fun Context.show() {
+        graph.initialize()
+        graph.resize(graphics.width, graphics.height)
         graph.root.enabled = true
     }
 

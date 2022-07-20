@@ -3,11 +3,14 @@ package com.lehaine.littlekt.samples.game.scenes
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.audio.AudioClip
 import com.lehaine.littlekt.graph.node.component.HAlign
-import com.lehaine.littlekt.graphics.*
+import com.lehaine.littlekt.graphics.SpriteBatch
+import com.lehaine.littlekt.graphics.TextureAtlas
 import com.lehaine.littlekt.graphics.font.BitmapFontCache
+import com.lehaine.littlekt.graphics.getAnimation
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkEntity
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkLevel
 import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkWorld
+import com.lehaine.littlekt.graphics.use
 import com.lehaine.littlekt.input.Input
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.samples.game.Assets
@@ -38,13 +41,15 @@ class PlatformerSampleScene(
     private val level: PlatformerLevel = PlatformerLevel(ldtkLevel)
     private val fx = Fx(atlas)
 
+
     private val camera =
-        GameCamera(virtualWidth = context.graphics.width, virtualHeight = context.graphics.height).apply {
-            viewport = ExtendViewport(200, 200)
-        }
-    private val uiCam = OrthographicCamera(context.graphics.width, context.graphics.height).apply {
-        viewport = ExtendViewport(480, 270)
-    }
+        GameCamera(
+            virtualWidth = context.graphics.width,
+            virtualHeight = context.graphics.height,
+        )
+    private val gameViewport = ExtendViewport(200, 200, camera)
+    private val uiViewport = ExtendViewport(480, 270)
+    private val uiCam = uiViewport.camera
 
     private val hero: Hero =
         Hero(
@@ -93,7 +98,7 @@ class PlatformerSampleScene(
             }
 
             camera.update(dt)
-            camera.viewport.apply(context)
+            gameViewport.apply(context)
             batch.use(camera.viewProjection) {
                 ldtkLevel.render(it, camera)
                 fx.render(it)
@@ -103,7 +108,7 @@ class PlatformerSampleScene(
                 hero.render(it)
             }
             uiCam.update()
-            uiCam.viewport.apply(context)
+            uiViewport.apply(context, true)
 
             batch.use(uiCam.viewProjection) {
                 fontCache.draw(it)
@@ -162,8 +167,8 @@ class PlatformerSampleScene(
     }
 
     override suspend fun Context.resize(width: Int, height: Int) {
-        camera.update(width, height, context)
-        uiCam.update(width, height, context)
+        gameViewport.update(width, height, context)
+        uiViewport.update(width, height, context)
     }
 
     override fun Context.dispose() {
@@ -245,6 +250,10 @@ class Hero(
     private var jumping = false
 
     init {
+        anim.apply {
+            registerState(run, 5) { input.isKeyPressed(Key.A) || input.isKeyPressed(Key.D) }
+            registerState(idle, 0)
+        }
         useTopCollisionRatio = true
         topCollisionRatio = 0.5f
         setFromLevelEntity(data)
@@ -292,9 +301,6 @@ class Hero(
             }
             dir = if (input.isKeyPressed(Key.D)) 1 else -1
             moveDir = dir.toFloat()
-            anim.playLooped(run)
-        } else {
-            anim.playLooped(idle)
         }
     }
 
