@@ -20,10 +20,10 @@ buildscript {
 }
 
 plugins {
-    kotlin("multiplatform") version "1.7.0"
-    kotlin("plugin.serialization") version "1.7.0"
+    kotlin("multiplatform") version "1.7.20"
+    kotlin("plugin.serialization") version "1.7.20"
     id("com.android.application") version "7.0.4"
-    id("com.lehaine.littlekt.gradle.texturepacker") version "0.3.0"
+    id("com.lehaine.littlekt.gradle.texturepacker") version "0.4.0"
 }
 
 group = "com.lehaine.littlekt.samples"
@@ -122,4 +122,8 @@ android {
         minSdk = (findProperty("android.minSdk") as String).toInt()
         targetSdk = (findProperty("android.targetSdk") as String).toInt()
     }
+}
+
+rootProject.extensions.configure<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension> {
+    versions.webpackCli.version = "4.10.0"
 }
