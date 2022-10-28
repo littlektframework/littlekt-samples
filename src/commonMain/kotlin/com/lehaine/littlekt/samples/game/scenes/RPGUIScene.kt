@@ -204,7 +204,7 @@ class RPGUIScene(
         graph.root.enabled = true
     }
 
-    override suspend fun Context.render(dt: Duration) {
+    override fun Context.render(dt: Duration) {
         gl.clear(ClearBufferMask.COLOR_BUFFER_BIT)
         gl.clearColor(Color.DARK_GRAY)
         graph.update(dt)
@@ -225,7 +225,7 @@ class RPGUIScene(
         mana = mana.clamp(0f, 100f)
     }
 
-    override suspend fun Context.resize(width: Int, height: Int) {
+    override fun Context.resize(width: Int, height: Int) {
         graph.resize(width, height, true)
     }
 

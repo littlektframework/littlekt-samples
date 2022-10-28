@@ -12,7 +12,7 @@ import kotlin.time.Duration
 open class GameScene(context: Context) : Scene(context) {
     val updateComponents = mutableListOf<UpdateComponent>()
 
-    override suspend fun Context.render(dt: Duration) {
+    override fun Context.render(dt: Duration) {
         gl.clear(ClearBufferMask.COLOR_DEPTH_BUFFER_BIT)
         updateComponents.forEach {
             it.update(dt)

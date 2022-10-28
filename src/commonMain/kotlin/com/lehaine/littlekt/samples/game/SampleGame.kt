@@ -49,7 +49,9 @@ class SampleGame(context: Context) : Game<GameScene>(context) {
         onRender {
             if (input.isKeyPressed(Key.SHIFT_LEFT) && input.isKeyJustPressed(Key.BACKSPACE)) {
                 if (containsScene<SelectionScene>() && currentScene !is SelectionScene) {
-                    setScene<SelectionScene>()
+                    KtScope.launch {
+                        setScene<SelectionScene>()
+                    }
                 }
             }
 

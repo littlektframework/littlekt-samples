@@ -72,13 +72,13 @@ class SelectionScene(
         graph.root.enabled = true
     }
 
-    override suspend fun Context.render(dt: Duration) {
+    override fun Context.render(dt: Duration) {
         gl.clear(ClearBufferMask.COLOR_BUFFER_BIT)
         graph.update(dt)
         graph.render()
     }
 
-    override suspend fun Context.resize(width: Int, height: Int) {
+    override fun Context.resize(width: Int, height: Int) {
         graph.resize(width, height)
     }
 

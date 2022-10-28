@@ -166,7 +166,7 @@ class PlatformerSampleScene(
         }
     }
 
-    override suspend fun Context.resize(width: Int, height: Int) {
+    override fun Context.resize(width: Int, height: Int) {
         gameViewport.update(width, height, context)
         uiViewport.update(width, height, context)
     }
