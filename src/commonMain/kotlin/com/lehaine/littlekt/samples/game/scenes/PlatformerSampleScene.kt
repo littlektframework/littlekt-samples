@@ -2,15 +2,15 @@ package com.lehaine.littlekt.samples.game.scenes
 
 import com.lehaine.littlekt.Context
 import com.lehaine.littlekt.audio.AudioClip
-import com.lehaine.littlekt.graph.node.component.HAlign
-import com.lehaine.littlekt.graphics.SpriteBatch
-import com.lehaine.littlekt.graphics.TextureAtlas
-import com.lehaine.littlekt.graphics.font.BitmapFontCache
-import com.lehaine.littlekt.graphics.getAnimation
-import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkEntity
-import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkLevel
-import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkWorld
-import com.lehaine.littlekt.graphics.use
+import com.lehaine.littlekt.graph.node.resource.HAlign
+import com.lehaine.littlekt.graphics.g2d.SpriteBatch
+import com.lehaine.littlekt.graphics.g2d.TextureAtlas
+import com.lehaine.littlekt.graphics.g2d.font.BitmapFontCache
+import com.lehaine.littlekt.graphics.g2d.getAnimation
+import com.lehaine.littlekt.graphics.g2d.tilemap.ldtk.LDtkEntity
+import com.lehaine.littlekt.graphics.g2d.tilemap.ldtk.LDtkLevel
+import com.lehaine.littlekt.graphics.g2d.tilemap.ldtk.LDtkWorld
+import com.lehaine.littlekt.graphics.g2d.use
 import com.lehaine.littlekt.input.Input
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.samples.game.Assets

@@ -1,16 +1,16 @@
 package com.lehaine.littlekt.samples.game.scenes
 
 import com.lehaine.littlekt.Context
-import com.lehaine.littlekt.graph.node.component.HAlign
-import com.lehaine.littlekt.graph.node.component.NinePatchDrawable
-import com.lehaine.littlekt.graph.node.component.VAlign
+import com.lehaine.littlekt.graph.node.resource.HAlign
+import com.lehaine.littlekt.graph.node.resource.NinePatchDrawable
+import com.lehaine.littlekt.graph.node.resource.VAlign
 import com.lehaine.littlekt.graph.node.ui.*
 import com.lehaine.littlekt.graph.sceneGraph
 import com.lehaine.littlekt.graphics.Color
-import com.lehaine.littlekt.graphics.NinePatch
-import com.lehaine.littlekt.graphics.SpriteBatch
-import com.lehaine.littlekt.graphics.TextureAtlas
-import com.lehaine.littlekt.graphics.font.BitmapFont
+import com.lehaine.littlekt.graphics.g2d.NinePatch
+import com.lehaine.littlekt.graphics.g2d.SpriteBatch
+import com.lehaine.littlekt.graphics.g2d.TextureAtlas
+import com.lehaine.littlekt.graphics.g2d.font.BitmapFont
 import com.lehaine.littlekt.graphics.gl.ClearBufferMask
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.math.clamp

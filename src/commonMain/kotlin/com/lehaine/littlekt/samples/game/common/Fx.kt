@@ -1,6 +1,7 @@
 package com.lehaine.littlekt.samples.game.common
 
-import com.lehaine.littlekt.graphics.*
+import com.lehaine.littlekt.graphics.Color
+import com.lehaine.littlekt.graphics.g2d.*
 import com.lehaine.littlekt.math.random
 import com.lehaine.littlekt.util.seconds
 import kotlin.time.Duration
@@ -24,7 +25,7 @@ class Fx(private val atlas: TextureAtlas) {
         create(5) {
             val p = alloc(atlas.getByPrefix("fxSmallCircle").slice, x, y)
             p.scale((0.15f..0.25f).random())
-            p.color.set(DUST_COLOR).also { p.colorBits = DUST_COLOR_BITS }
+            p.color.set(DUST_COLOR)
             p.xDelta = (0.25f..0.75f).random() * dir
             p.yDelta = -(0.05f..0.15f).random()
             p.life = (0.05f..0.15f).random().seconds
@@ -42,6 +43,5 @@ class Fx(private val atlas: TextureAtlas) {
 
     companion object {
         private val DUST_COLOR = Color.fromHex("#efddc0")
-        private val DUST_COLOR_BITS = DUST_COLOR.toFloatBits()
     }
 }

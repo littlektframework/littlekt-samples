@@ -7,10 +7,10 @@ import com.lehaine.littlekt.Game
 import com.lehaine.littlekt.async.KtScope
 import com.lehaine.littlekt.audio.AudioClip
 import com.lehaine.littlekt.file.ldtk.LDtkMapLoader
-import com.lehaine.littlekt.graphics.SpriteBatch
-import com.lehaine.littlekt.graphics.TextureAtlas
-import com.lehaine.littlekt.graphics.font.BitmapFont
-import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkWorld
+import com.lehaine.littlekt.graphics.g2d.SpriteBatch
+import com.lehaine.littlekt.graphics.g2d.TextureAtlas
+import com.lehaine.littlekt.graphics.g2d.font.BitmapFont
+import com.lehaine.littlekt.graphics.g2d.tilemap.ldtk.LDtkWorld
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.log.Logger
 import com.lehaine.littlekt.samples.game.common.GameScene

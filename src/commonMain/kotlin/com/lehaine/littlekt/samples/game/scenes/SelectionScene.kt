@@ -7,7 +7,7 @@ import com.lehaine.littlekt.graph.node.ui.centerContainer
 import com.lehaine.littlekt.graph.node.ui.label
 import com.lehaine.littlekt.graph.node.ui.vBoxContainer
 import com.lehaine.littlekt.graph.sceneGraph
-import com.lehaine.littlekt.graphics.SpriteBatch
+import com.lehaine.littlekt.graphics.g2d.SpriteBatch
 import com.lehaine.littlekt.graphics.gl.ClearBufferMask
 import com.lehaine.littlekt.samples.game.common.GameScene
 import com.lehaine.littlekt.util.viewport.FitViewport

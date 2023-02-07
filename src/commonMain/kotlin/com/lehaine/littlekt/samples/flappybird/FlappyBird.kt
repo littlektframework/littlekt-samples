@@ -7,12 +7,13 @@ import com.lehaine.littlekt.async.newSingleThreadAsyncContext
 import com.lehaine.littlekt.file.vfs.readAtlas
 import com.lehaine.littlekt.file.vfs.readAudioClip
 import com.lehaine.littlekt.file.vfs.readBitmapFont
-import com.lehaine.littlekt.graph.node.component.HAlign
-import com.lehaine.littlekt.graph.node.component.InputEvent
-import com.lehaine.littlekt.graph.node.component.NinePatchDrawable
+import com.lehaine.littlekt.graph.node.resource.HAlign
+import com.lehaine.littlekt.graph.node.resource.InputEvent
+import com.lehaine.littlekt.graph.node.resource.NinePatchDrawable
 import com.lehaine.littlekt.graph.node.ui.*
 import com.lehaine.littlekt.graph.sceneGraph
-import com.lehaine.littlekt.graphics.*
+import com.lehaine.littlekt.graphics.Color
+import com.lehaine.littlekt.graphics.g2d.*
 import com.lehaine.littlekt.graphics.gl.ClearBufferMask
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.input.Pointer

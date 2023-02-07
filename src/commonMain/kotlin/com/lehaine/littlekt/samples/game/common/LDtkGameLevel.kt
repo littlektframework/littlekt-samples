@@ -1,7 +1,7 @@
 package com.lehaine.littlekt.samples.game.common
 
-import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkIntGridLayer
-import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkLevel
+import com.lehaine.littlekt.graphics.g2d.tilemap.ldtk.LDtkIntGridLayer
+import com.lehaine.littlekt.graphics.g2d.tilemap.ldtk.LDtkLevel
 import com.lehaine.littlekt.math.clamp
 
 /**

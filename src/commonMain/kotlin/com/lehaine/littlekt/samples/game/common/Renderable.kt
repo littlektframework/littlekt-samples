@@ -1,6 +1,6 @@
 package com.lehaine.littlekt.samples.game.common
 
-import com.lehaine.littlekt.graphics.SpriteBatch
+import com.lehaine.littlekt.graphics.g2d.SpriteBatch
 
 /**
  * @author Colton Daily

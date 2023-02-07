@@ -20,10 +20,10 @@ buildscript {
 }
 
 plugins {
-    kotlin("multiplatform") version "1.7.20"
-    kotlin("plugin.serialization") version "1.7.20"
+    kotlin("multiplatform") version "1.8.10"
+    kotlin("plugin.serialization") version "1.8.10"
     id("com.android.application") version "7.0.4"
-    id("com.lehaine.littlekt.gradle.texturepacker") version "0.4.0"
+    id("com.lehaine.littlekt.gradle.texturepacker") version "0.6.0"
 }
 
 group = "com.lehaine.littlekt.samples"

@@ -1,8 +1,8 @@
 package com.lehaine.littlekt.samples.game.common
 
-import com.lehaine.littlekt.graphics.AnimationPlayer
-import com.lehaine.littlekt.graphics.SpriteBatch
-import com.lehaine.littlekt.graphics.TextureSlice
+import com.lehaine.littlekt.graphics.g2d.AnimationPlayer
+import com.lehaine.littlekt.graphics.g2d.SpriteBatch
+import com.lehaine.littlekt.graphics.g2d.TextureSlice
 import com.lehaine.littlekt.graphics.Textures
 import com.lehaine.littlekt.math.interpolate
 import com.lehaine.littlekt.util.seconds

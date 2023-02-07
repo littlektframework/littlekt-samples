@@ -1,6 +1,6 @@
 package com.lehaine.littlekt.samples.game.common
 
-import com.lehaine.littlekt.graphics.tilemap.ldtk.LDtkEntity
+import com.lehaine.littlekt.graphics.g2d.tilemap.ldtk.LDtkEntity
 import kotlin.math.floor
 
 /**
