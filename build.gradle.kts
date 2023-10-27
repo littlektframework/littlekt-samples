@@ -20,10 +20,10 @@ buildscript {
 }
 
 plugins {
-    kotlin("multiplatform") version "1.8.10"
-    kotlin("plugin.serialization") version "1.8.10"
-    id("com.android.application") version "7.0.4"
-    id("com.lehaine.littlekt.gradle.texturepacker") version "0.6.0"
+    kotlin("multiplatform") version "1.9.10"
+    kotlin("plugin.serialization") version "1.9.10"
+    id("com.android.application") version "7.3.1"
+    id("com.lehaine.littlekt.gradle.texturepacker") version "0.8.0"
 }
 
 group = "com.lehaine.littlekt.samples"
@@ -121,6 +121,10 @@ android {
     defaultConfig {
         minSdk = (findProperty("android.minSdk") as String).toInt()
         targetSdk = (findProperty("android.targetSdk") as String).toInt()
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 }
 
