@@ -18,7 +18,7 @@ import com.lehaine.littlekt.samples.game.scenes.PlatformerSampleScene
 import com.lehaine.littlekt.samples.game.scenes.RPGUIScene
 import com.lehaine.littlekt.samples.game.scenes.SelectionScene
 import kotlinx.coroutines.launch
-import kotlin.jvm.Volatile
+import kotlin.concurrent.Volatile
 import kotlin.reflect.KClass
 
 /**
@@ -39,9 +39,9 @@ class SampleGame(context: Context) : Game<GameScene>(context) {
         setSceneCallbacks(this)
         Assets.createInstance(this) {
             KtScope.launch {
-                addScene(SelectionScene(batch, ::onSelection, context))
-                addScene(PlatformerSampleScene(batch, context))
-                addScene(RPGUIScene(batch, context))
+                addScene(SelectionScene::class, SelectionScene(batch, ::onSelection, context))
+                addScene(PlatformerSampleScene::class, PlatformerSampleScene(batch, context))
+                addScene(RPGUIScene::class, RPGUIScene(batch, context))
                 setScene<SelectionScene>()
             }
         }

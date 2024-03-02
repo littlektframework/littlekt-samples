@@ -96,7 +96,7 @@ kotlin {
         val jvmTest by getting
         val jsMain by getting {
             dependencies {
-                val kotlinxHtmlVersion = "0.7.2"
+                val kotlinxHtmlVersion = "0.9.1"
                 implementation("org.jetbrains.kotlinx:kotlinx-html-js:$kotlinxHtmlVersion")
             }
 

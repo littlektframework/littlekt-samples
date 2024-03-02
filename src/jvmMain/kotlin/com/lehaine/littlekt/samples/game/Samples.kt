@@ -1,4 +1,4 @@
-package com.lehaine.littlekt.samples
+package com.lehaine.littlekt.samples.game
 
 import com.lehaine.littlekt.createLittleKtApp
 import com.lehaine.littlekt.samples.game.SampleGame
