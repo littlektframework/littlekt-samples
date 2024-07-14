@@ -8,7 +8,6 @@ import com.littlekt.graphics.Color
 import com.littlekt.graphics.HAlign
 import com.littlekt.graphics.VAlign
 import com.littlekt.graphics.g2d.NinePatch
-import com.littlekt.graphics.g2d.SpriteBatch
 import com.littlekt.graphics.g2d.TextureAtlas
 import com.littlekt.graphics.g2d.font.BitmapFont
 import com.littlekt.graphics.webgpu.*
@@ -17,7 +16,6 @@ import com.littlekt.math.clamp
 import com.littlekt.samples.game.Assets
 import com.littlekt.samples.game.common.GameScene
 import com.littlekt.util.viewport.ExtendViewport
-import com.littlekt.util.viewport.setViewport
 import kotlin.time.Duration
 
 /**
@@ -33,28 +31,33 @@ class RPGUIScene(
     private var health = 100f
     private var mana = 100f
 
-   private val device = context.graphics.device
-   private val preferredFormat = context.graphics.preferredFormat
-   private val batch = SpriteBatch(device, context.graphics, preferredFormat)
+    private val device = context.graphics.device
+    private val preferredFormat = context.graphics.preferredFormat
 
     private val graph =
-        sceneGraph(context, ExtendViewport(480, 270), batch) {
+        sceneGraph(
+            context,
+            ExtendViewport(480, 270)
+        ) {
             textureRect {
                 slice = atlas.getByPrefix("rpgBackground").slice
+                anchorRight = 1f
+                anchorTop = 1f
+                stretchMode = TextureRect.StretchMode.KEEP_ASPECT_COVERED
             }
             paddedContainer {
                 name = "GUI"
                 padding(5)
                 anchorRight = 1f
-                anchorBottom = 1f
+                anchorTop = 1f
 
-                hBoxContainer {
-                    vBoxContainer {
+                row {
+                    column {
                         name = "Player Info"
                         separation = 5
                         horizontalSizing = Control.SizeFlag.FILL or Control.SizeFlag.EXPAND
 
-                        hBoxContainer {
+                        row {
                             name = "Health Bar"
 
                             textureProgress {
@@ -84,7 +87,7 @@ class RPGUIScene(
                                         horizontalAlign = HAlign.CENTER
                                         verticalAlign = VAlign.CENTER
                                         anchorRight = 1f
-                                        anchorBottom = 1f
+                                        anchorTop = 1f
 
                                         onUpdate += {
                                             text = "HP: ${health.toInt()}"
@@ -94,7 +97,7 @@ class RPGUIScene(
                             }
                         }
 
-                        hBoxContainer {
+                        row {
                             name = "Mana Bar"
 
                             textureProgress {
@@ -125,7 +128,7 @@ class RPGUIScene(
                                         horizontalAlign = HAlign.CENTER
                                         verticalAlign = VAlign.CENTER
                                         anchorRight = 1f
-                                        anchorBottom = 1f
+                                        anchorTop = 1f
 
                                         onUpdate += {
                                             text = "MP: ${mana.toInt()}"
@@ -158,13 +161,14 @@ class RPGUIScene(
                                 verticalAlign = VAlign.CENTER
                                 anchorLeft = 0.5f
                                 anchorRight = 1f
-                                anchorBottom = 1f
+                                anchorBottom = 0.5f
+                                marginLeft = 5f
 
                             }
                         }
                     }
 
-                    vBoxContainer {
+                    column {
                         name = "Zone Info"
                         separation = 5
 
@@ -179,24 +183,23 @@ class RPGUIScene(
                         }
                     }
                 }
+            }
+            panelContainer {
+                panel = NinePatchDrawable(NinePatch(atlas.getByPrefix("panel9").slice, 3, 3, 3, 3))
+                minHeight = 65f
+                marginLeft = 5f
+                marginRight = -5f
+                marginBottom = 5f
+                anchorRight = 1f
 
-                control {
-                    panelContainer {
-                        panel = NinePatchDrawable(NinePatch(atlas.getByPrefix("panel9").slice, 3, 3, 3, 3))
-                        minHeight = 65f
-                        anchorTop = 0.75f
-                        anchorRight = 1f
-
-                        paddedContainer {
-                            padding(7)
-                            label {
-                                text =
-                                    "Press Z and X to decrexase / increase health bar.\nPress C and V to decrease / increase mana bar."
-                                font = pixelFont
-                            }
-
-                        }
+                paddedContainer {
+                    padding(7)
+                    label {
+                        text =
+                            "Press Z and X to decrexase / increase health bar.\nPress C and V to decrease / increase mana bar."
+                        font = pixelFont
                     }
+
                 }
             }
         }

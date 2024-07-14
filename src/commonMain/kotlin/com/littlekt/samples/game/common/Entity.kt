@@ -1,8 +1,10 @@
 package com.littlekt.samples.game.common
 
+import com.littlekt.graphics.Color
 import com.littlekt.graphics.g2d.AnimationPlayer
 import com.littlekt.graphics.g2d.SpriteBatch
 import com.littlekt.graphics.g2d.TextureSlice
+import com.littlekt.graphics.g2d.shape.ShapeRenderer
 import com.littlekt.math.interpolate
 import com.littlekt.resources.Textures
 import com.littlekt.util.seconds
@@ -97,9 +99,9 @@ open class Entity(val gridCellSize: Int) {
     val attachY get() = (cy + yr) * gridCellSize
     val centerX get() = attachX + (0.5f - anchorX) * gridCellSize
     val centerY get() = attachY + (0.5f - anchorY) * gridCellSize
-    val top get() = attachY - anchorY * height
+    val top get() = attachY + (1 - anchorY) * height
     val right get() = attachX + (1 - anchorX) * width
-    val bottom get() = attachY + (1 - anchorY) * height
+    val bottom get() = attachY - anchorY * height
     val left get() = attachX - anchorX * width
 
     /**
@@ -123,7 +125,7 @@ open class Entity(val gridCellSize: Int) {
     }
     var visible: Boolean = true
 
-    fun render(batch: SpriteBatch) {
+    fun render(batch: SpriteBatch, shapeRenderer: ShapeRenderer) {
         if (!visible) return
 
         batch.draw(
@@ -133,6 +135,8 @@ open class Entity(val gridCellSize: Int) {
             scaleX = scaleX,
             scaleY = scaleY
         )
+        shapeRenderer.rectangle(left, bottom, right - left, top - bottom)
+        shapeRenderer.filledCircle(attachX, attachY, 1f, color = Color.GREEN)
     }
 
     open fun update(dt: Duration) {
@@ -169,16 +173,12 @@ open class Entity(val gridCellSize: Int) {
             return false
         }
 
-        val ly = top
-        val ry = bottom
-        val ly2 = from.top
-        val ry2 = from.bottom
+        val ly = bottom
+        val ry = top
+        val ly2 = from.bottom
+        val ry2 = from.top
 
-        if (ly >= ry2 || ly2 >= ry) {
-            return false
-        }
-
-        return true
+        return !(ly >= ry2 || ly2 >= ry)
     }
 
     fun isCollidingWithInnerCircle(from: Entity) = distPxTo(from) <= innerRadius

@@ -9,8 +9,8 @@ import com.littlekt.math.clamp
  * @date 12/26/2021
  */
 abstract class LDtkGameLevel<LevelMark>(var level: LDtkLevel) : GameLevel<LevelMark> {
-    val levelWidth get() = level["Collisions"].gridWidth
-    val levelHeight get() = level["Collisions"].gridHeight
+    override val levelWidth get() = level["Collisions"].gridWidth
+    override val levelHeight get() = level["Collisions"].gridHeight
 
     protected val marks = mutableMapOf<LevelMark, MutableMap<Int, Int>>()
 

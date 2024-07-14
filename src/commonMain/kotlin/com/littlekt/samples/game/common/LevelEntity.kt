@@ -17,9 +17,9 @@ open class LevelEntity(
     var topCollisionRatio: Float = 1f
     var useTopCollisionRatio: Boolean = false
 
-    fun setFromLevelEntity(data: LDtkEntity) {
+    fun setFromLDtkEntity(data: LDtkEntity) {
         cx = data.cx
-        cy = data.cy
+        cy = level.levelHeight - 1 - data.cy
         xr = data.pivotX
         yr = data.pivotY
         anchorX = data.pivotX
@@ -42,15 +42,15 @@ open class LevelEntity(
 
     override fun checkYCollision() {
         val heightCoordDiff = if (useTopCollisionRatio) topCollisionRatio else floor(height / gridCellSize.toFloat())
-        if (level.hasCollision(cx, cy - 1) && yr <= heightCoordDiff) {
+        if (level.hasCollision(cx, cy + 1) && yr >= heightCoordDiff) {
             yr = heightCoordDiff
             velocityY = 0f
-            onLevelCollision(0, -1)
+            onLevelCollision(0, 1)
         }
-        if (level.hasCollision(cx, cy + 1) && yr >= bottomCollisionRatio) {
+        if (level.hasCollision(cx, cy - 1) && yr <= bottomCollisionRatio) {
             velocityY = 0f
             yr = bottomCollisionRatio
-            onLevelCollision(0, 1)
+            onLevelCollision(0, -1)
         }
     }
 

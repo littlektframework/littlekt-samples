@@ -8,7 +8,7 @@ open class PlatformEntity(level: GameLevel<*>, gridCellSize: Int) : LevelEntity(
     val onGround
         get() = velocityY == 0f && level.hasCollision(
             cx,
-            cy + 1
+            cy - 1
         ) && yr == bottomCollisionRatio
 
     var hasGravity: Boolean = true
@@ -16,7 +16,7 @@ open class PlatformEntity(level: GameLevel<*>, gridCellSize: Int) : LevelEntity(
     private val gravityPulling get() = !onGround && hasGravity
 
     init {
-        gravityY = 0.075f
+        gravityY = -0.075f
     }
 
     override fun calculateDeltaYGravity(): Float {

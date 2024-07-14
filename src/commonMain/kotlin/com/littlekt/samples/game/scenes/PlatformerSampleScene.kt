@@ -8,10 +8,10 @@ import com.littlekt.graphics.g2d.SpriteBatch
 import com.littlekt.graphics.g2d.TextureAtlas
 import com.littlekt.graphics.g2d.font.BitmapFontCache
 import com.littlekt.graphics.g2d.getAnimation
+import com.littlekt.graphics.g2d.shape.ShapeRenderer
 import com.littlekt.graphics.g2d.tilemap.ldtk.LDtkEntity
 import com.littlekt.graphics.g2d.tilemap.ldtk.LDtkLevel
 import com.littlekt.graphics.g2d.tilemap.ldtk.LDtkWorld
-import com.littlekt.graphics.g2d.use
 import com.littlekt.graphics.webgpu.*
 import com.littlekt.input.Input
 import com.littlekt.input.Key
@@ -19,7 +19,6 @@ import com.littlekt.samples.game.Assets
 import com.littlekt.samples.game.common.*
 import com.littlekt.util.datastructure.fastForEach
 import com.littlekt.util.viewport.ExtendViewport
-import com.littlekt.util.viewport.setViewport
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -70,7 +69,8 @@ class PlatformerSampleScene(
     private var fixedProgressionRatio = 1f
     private val device = context.graphics.device
     private val preferredFormat = context.graphics.preferredFormat
-    private val batch = SpriteBatch(device, context.graphics, preferredFormat)
+    private val batch = SpriteBatch(device, context.graphics, preferredFormat, cameraDynamicSize = 50)
+    private val shapeRenderer = ShapeRenderer(batch)
 
     override suspend fun Context.show() {
         if (!created) {
@@ -82,7 +82,7 @@ class PlatformerSampleScene(
         initLevel()
 
         addTmodUpdater(60) { dt, tmod ->
-            if (context.input.isKeyJustPressed(Key.R) && gameOver) {
+            if (context.input.isKeyJustPressed(Key.R) && (gameOver || context.input.isKeyPressed(Key.SHIFT_LEFT))) {
                 entities.fastForEach {
                     it.destroy()
                 }
@@ -142,17 +142,17 @@ class PlatformerSampleScene(
                         )
                     )
                 )
-            gameRenderPassEncoder.setViewport(gameViewport)
-            camera.update()
+            camera.update(dt)
 
-            batch.use(gameRenderPassEncoder, camera.viewProjection) {
-                ldtkLevel.render(it, camera)
-                fx.render(it)
-                entities.fastForEach { entity ->
-                    entity.render(it)
-                }
-                hero.render(it)
+            batch.begin(camera.viewProjection)
+            ldtkLevel.render(batch, camera)
+            fx.render(batch)
+            entities.fastForEach { entity ->
+                entity.render(batch, shapeRenderer)
             }
+            hero.render(batch, shapeRenderer)
+            batch.flush(gameRenderPassEncoder)
+
             gameRenderPassEncoder.end()
 
             val uiRenderPassEncoder =
@@ -162,7 +162,7 @@ class PlatformerSampleScene(
                         listOf(
                             RenderPassColorAttachmentDescriptor(
                                 view = frame,
-                                loadOp = LoadOp.CLEAR,
+                                loadOp = LoadOp.LOAD,
                                 storeOp = StoreOp.STORE,
                                 clearColor =
                                 if (preferredFormat.srgb) Color.DARK_GRAY.toLinear()
@@ -171,12 +171,12 @@ class PlatformerSampleScene(
                         )
                     )
                 )
-            uiRenderPassEncoder.setViewport(uiViewport)
             uiCam.update()
 
-            batch.use(uiRenderPassEncoder, uiCam.viewProjection) {
-                fontCache.draw(it)
-            }
+            batch.viewProjection = uiCam.viewProjection
+            fontCache.draw(batch)
+            batch.flush(uiRenderPassEncoder)
+            batch.end()
             uiRenderPassEncoder.end()
 
             val commandBuffer = commandEncoder.finish()
@@ -211,7 +211,7 @@ class PlatformerSampleScene(
     private var created = false
 
     private fun initLevel() {
-        hero.setFromLevelEntity(ldtkLevel.entities("Player")[0])
+        hero.setFromLDtkEntity(ldtkLevel.entities("Player")[0])
         entities += hero
         ldtkLevel.entities("Diamond").forEach { ldtkEntity ->
             entities += Diamond(ldtkEntity, sfxPickup, atlas, level, hero).also {
@@ -276,26 +276,26 @@ class PlatformerLevel(level: LDtkLevel) : LDtkGameLevel<PlatformerLevel.LevelMar
         for (cy in 0 until levelHeight) {
             for (cx in 0 until levelWidth) {
                 // no collision at current pos or north but has collision south.
-                if (!hasCollision(cx, cy) && hasCollision(cx, cy + 1) && !hasCollision(cx, cy - 1)) {
+                if (!hasCollision(cx, cy) && hasCollision(cx, cy - 1) && !hasCollision(cx, cy + 1)) {
                     // if collision to the east of current pos and no collision to the northeast
-                    if (hasCollision(cx + 1, cy) && !hasCollision(cx + 1, cy - 1)) {
+                    if (hasCollision(cx + 1, cy) && !hasCollision(cx + 1, cy + 1)) {
                         setMark(cx, cy, LevelMark.SMALL_STEP, 1);
                     }
 
                     // if collision to the west of current pos and no collision to the northwest
-                    if (hasCollision(cx - 1, cy) && !hasCollision(cx - 1, cy - 1)) {
+                    if (hasCollision(cx - 1, cy) && !hasCollision(cx - 1, cy + 1)) {
                         setMark(cx, cy, LevelMark.SMALL_STEP, -1);
                     }
                 }
 
-                if (!hasCollision(cx, cy) && hasCollision(cx, cy + 1)) {
+                if (!hasCollision(cx, cy) && hasCollision(cx, cy - 1)) {
                     if (hasCollision(cx + 1, cy) ||
-                        (!hasCollision(cx + 1, cy + 1) && !hasCollision(cx + 1, cy + 2))
+                        (!hasCollision(cx + 1, cy - 1) && !hasCollision(cx + 1, cy - 2))
                     ) {
                         setMarks(cx, cy, listOf(LevelMark.PLATFORM_END, LevelMark.PLATFORM_END_RIGHT))
                     }
                     if (hasCollision(cx - 1, cy) ||
-                        (!hasCollision(cx - 1, cy + 1) && !hasCollision(cx - 1, cy + 2))
+                        (!hasCollision(cx - 1, cy - 1) && !hasCollision(cx - 1, cy - 2))
                     ) {
                         setMarks(cx, cy, listOf(LevelMark.PLATFORM_END, LevelMark.PLATFORM_END_LEFT))
                     }
@@ -327,7 +327,7 @@ class Hero(
 
     private val speed = 0.08f
     private var moveDir = 0f
-    private val jumpHeight = -1.35f
+    private val jumpHeight = 1.35f
     private var lastHeight = py
     private var jumping = false
 
@@ -338,7 +338,7 @@ class Hero(
         }
         useTopCollisionRatio = true
         topCollisionRatio = 0.5f
-        setFromLevelEntity(data)
+        setFromLDtkEntity(data)
     }
 
     override fun update(dt: Duration) {
@@ -347,19 +347,21 @@ class Hero(
 
         if (onGround) {
             cd(ON_GROUND_RECENTLY, 150.milliseconds)
-            if (py - lastHeight > 25) {
+            if (lastHeight - py > 25) {
                 sfxLand.play()
                 camera.shake(25.milliseconds, 0.7f)
             }
             lastHeight = py
         } else {
-            if (velocityY < 0) {
+            if (velocityY > 0) {
                 lastHeight = py
             }
         }
 
         run()
         jump()
+
+        println("$cx($xr), $cy($yr)")
     }
 
     override fun fixedUpdate() {
@@ -415,7 +417,7 @@ class Diamond(
 
     init {
         sprite = atlas.getByPrefix("diamond").slice
-        setFromLevelEntity(data)
+        setFromLDtkEntity(data)
         ALL += this
     }
 

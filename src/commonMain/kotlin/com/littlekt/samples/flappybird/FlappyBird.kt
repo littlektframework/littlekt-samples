@@ -22,7 +22,6 @@ import com.littlekt.math.Rect
 import com.littlekt.util.calculateViewBounds
 import com.littlekt.util.milliseconds
 import com.littlekt.util.viewport.ExtendViewport
-import com.littlekt.util.viewport.setViewport
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -79,7 +78,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
             val tile = atlas.getByPrefix("terrainTile$tileIdx").slice
             TexturedEnvironmentObject(tile, totalToWait = 10, hasCollision = true).apply {
                 x = it * tile.width.toFloat() - (tile.width * 10)
-                y = 256f - tile.height
+                y = 0f
             }
         }
 
@@ -119,7 +118,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
             groundTiles.forEachIndexed { index, tile ->
                 tile.apply {
                     x = index * texture.width.toFloat() - (texture.width * 10)
-                    y = 256f - texture.height
+                    y = 0f
                 }
             }
 
@@ -131,10 +130,11 @@ class FlappyBird(context: Context) : ContextListener(context) {
             }
         }
 
-        val ui = sceneGraph(this, ExtendViewport(135, 256), batch) {
+        val ui = sceneGraph(this, ExtendViewport(135, 256)) {
             textureRect {
-                x = 10f
-                y = 10f
+                anchor(Control.AnchorLayout.TOP_LEFT)
+                marginLeft = 10f
+                marginTop = 10f
                 slice = pauseSlice
 
                 onUpdate += {
@@ -158,8 +158,8 @@ class FlappyBird(context: Context) : ContextListener(context) {
 
                 anchorLeft = 0.1f
                 anchorRight = 0.9f
-                anchorTop = 0.3f
-                anchorBottom = 0.8f
+                anchorTop = 0.8f
+                anchorBottom = 0.3f
 
                 onUpdate += {
                     visible = gameOver
@@ -167,9 +167,9 @@ class FlappyBird(context: Context) : ContextListener(context) {
 
                 vBoxContainer {
                     separation = 10
-                    marginTop = 5f
+                    marginBottom = 5f
                     anchorRight = 1f
-                    anchorBottom = 1f
+                    anchorTop = 1f
 
                     label {
                         font = pixelFont
@@ -195,7 +195,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
                     anchorBottom = 1f
                     anchorRight = 1f
 
-                    marginTop = -50f
+                    marginBottom = -50f
                     slice = startButton
                     stretchMode = TextureRect.StretchMode.KEEP_CENTERED
 
@@ -211,7 +211,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
 
             centerContainer {
                 anchorRight = 1f
-                anchorBottom = 1f
+                anchorTop = 1f
                 onUpdate += {
                     visible = paused
                 }
@@ -241,8 +241,9 @@ class FlappyBird(context: Context) : ContextListener(context) {
             }
 
             textureRect {
-                x = 10f
-                y = 10f
+                anchor(Control.AnchorLayout.TOP_LEFT)
+                marginLeft = 10f
+                marginTop = 10f
                 slice = pauseSlice
 
                 onUpdate += {
@@ -250,7 +251,6 @@ class FlappyBird(context: Context) : ContextListener(context) {
                 }
 
                 onUiInput += {
-                    println(it.type)
                     if (it.type == InputEvent.Type.TOUCH_DOWN) {
                         paused = !paused
                         it.handle()
@@ -259,7 +259,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
             }
             label {
                 anchorRight = 1f
-                anchorTop = 0.10f
+                anchorBottom = 0.9f
                 text = "0"
                 font = pixelFont
                 horizontalAlign = HAlign.CENTER
@@ -271,7 +271,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
             }
             textureRect {
                 anchorRight = 1f
-                anchorTop = 0.2f
+                anchorBottom = 0.8f
                 stretchMode = TextureRect.StretchMode.KEEP_CENTERED
                 slice = atlas.getByPrefix("gameOverText").slice
                 onUpdate += {
@@ -281,7 +281,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
 
             textureRect {
                 anchorRight = 1f
-                anchorTop = 0.2f
+                anchorBottom = 0.8f
                 stretchMode = TextureRect.StretchMode.KEEP_CENTERED
                 slice = atlas.getByPrefix("getReadyText").slice
                 onUpdate += {
@@ -412,17 +412,16 @@ class FlappyBird(context: Context) : ContextListener(context) {
                             clearColor = if (preferredFormat.srgb) Color.DARK_GRAY.toLinear()
                             else Color.DARK_GRAY
                         )
-                    )
+                    ), label = "Game render pass"
                 )
             )
-            gameRenderPassEncoder.setViewport(gameViewport)
 
-            batch.begin()
-            backgrounds.forEach { it.render(batch) }
-            groundTiles.forEach { it.render(batch) }
-            pipes.forEach { it.render(batch) }
-            bird.render(batch)
-            batch.flush(gameRenderPassEncoder, gameCamera.viewProjection)
+            batch.use(gameRenderPassEncoder, gameCamera.viewProjection) {
+                backgrounds.forEach { it.render(batch) }
+                groundTiles.forEach { it.render(batch) }
+                bird.render(batch)
+                pipes.forEach { it.render(batch) }
+            }
             gameRenderPassEncoder.end()
 
             val renderPassDescriptor = RenderPassDescriptor(
@@ -438,7 +437,6 @@ class FlappyBird(context: Context) : ContextListener(context) {
 
             ui.update(dt)
             ui.render(commandEncoder, renderPassDescriptor)
-            batch.end()
 
             val commandBuffer = commandEncoder.finish()
 
@@ -492,7 +490,7 @@ private class Bird(private val flapAnimation: Animation<TextureSlice>, var width
         velocity.y += gravity * gravityMultiplier
 
         x += velocity.x * dt.milliseconds
-        y += velocity.y * dt.milliseconds
+        y -= velocity.y * dt.milliseconds
         animationPlayer.update(dt)
 
         velocity.y *= 0.91f
@@ -590,15 +588,19 @@ private class Pipe(
             onViewBoundsReset()
         }
 
-        topPipeBodyRect.set(x, y, pipeBody.width.toFloat(), pipeTopHeight)
-        topPipeHeadRect.set(x, y + pipeTopHeight, pipeHead.width.toFloat(), pipeHead.height.toFloat())
+        topPipeBodyRect.set(x, y - groundOffset + availableHeight, pipeBody.width.toFloat(), pipeTopHeight)
+        topPipeHeadRect.set(
+            x,
+            y + availableHeight - groundOffset - pipeBottomHeight - pipeHead.height.toFloat(),
+            pipeHead.width.toFloat(), pipeHead.height.toFloat()
+        )
 
         bottomPipeBodyRect.set(
-            x, y - groundOffset + availableHeight, pipeBody.width.toFloat(), pipeBottomHeight
+            x, y, pipeBody.width.toFloat(), pipeBottomHeight
         )
         bottomPipeHeadRect.set(
             x,
-            y + availableHeight - groundOffset - pipeBottomHeight - pipeHead.height.toFloat(),
+            y + pipeTopHeight,
             pipeHead.width.toFloat(),
             pipeHead.height.toFloat()
         )
@@ -608,23 +610,23 @@ private class Pipe(
 
     fun render(batch: Batch) {
         // draw top pipe
-        batch.draw(pipeBody, x, y, height = pipeTopHeight)
-        batch.draw(pipeHead, x, y + pipeTopHeight, flipY = true)
+        batch.draw(pipeBody, x, y + groundOffset + availableHeight, height = pipeTopHeight)
+        batch.draw(pipeHead, x, y + groundOffset  - pipeTopHeight, flipY = true)
 
-        // draw bottom pipe
-        batch.draw(
-            slice = pipeBody,
-            x = x,
-            y = y - groundOffset + availableHeight,
-            originY = pipeBottomHeight,
-            height = pipeBottomHeight
-        )
-        batch.draw(
-            slice = pipeHead,
-            x = x,
-            y = y + availableHeight - groundOffset - pipeBottomHeight,
-            originY = pipeHead.height.toFloat()
-        )
+//        // draw bottom pipe
+//        batch.draw(
+//            slice = pipeBody,
+//            x = x,
+//            y = y - groundOffset + availableHeight,
+//            originY = pipeBottomHeight,
+//            height = pipeBottomHeight
+//        )
+//        batch.draw(
+//            slice = pipeHead,
+//            x = x,
+//            y = y + availableHeight - groundOffset - pipeBottomHeight,
+//            originY = pipeHead.height.toFloat()
+//        )
     }
 
     fun intersectingScore(rect: Rect) = !collected && scoreRect.intersects(rect)

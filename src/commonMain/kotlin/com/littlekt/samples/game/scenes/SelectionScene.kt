@@ -4,8 +4,8 @@ import com.littlekt.Context
 import com.littlekt.async.KtScope
 import com.littlekt.graph.node.ui.button
 import com.littlekt.graph.node.ui.centerContainer
+import com.littlekt.graph.node.ui.column
 import com.littlekt.graph.node.ui.label
-import com.littlekt.graph.node.ui.vBoxContainer
 import com.littlekt.graph.sceneGraph
 import com.littlekt.graphics.Color
 import com.littlekt.graphics.g2d.SpriteBatch
@@ -30,14 +30,14 @@ class SelectionScene(
     private val graph = sceneGraph(context, ScreenViewport(960, 540), batch = batch) {
         centerContainer {
             anchorRight = 1f
-            anchorBottom = 1f
-            vBoxContainer {
+            anchorTop = 1f
+            column {
                 separation = 20
                 label {
                     text = "Select a Sample:"
                 }
 
-                vBoxContainer {
+                column {
                     separation = 10
                     button {
                         text = "Platformer - Collect all the Diamonds!"
@@ -119,6 +119,7 @@ class SelectionScene(
             )
         graph.update(dt)
         graph.render(commandEncoder, renderPassDescriptor)
+        if (batch.drawing) batch.end()
 
         val commandBuffer = commandEncoder.finish()
 

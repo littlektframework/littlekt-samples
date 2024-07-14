@@ -33,17 +33,23 @@ class SampleGame(context: Context) : Game<GameScene>(context) {
     private suspend fun <T : GameScene> onSelection(scene: KClass<out T>) = setScene(scene)
 
     override suspend fun Context.start() {
-        setSceneCallbacks(this)
+        setSceneCallbacks(this@start)
+        var loaded = false
+        var init = false
         Assets.createInstance(this) {
-            KtScope.launch {
-                addScene(SelectionScene::class, SelectionScene(::onSelection, context))
-                addScene(PlatformerSampleScene::class, PlatformerSampleScene(context))
-                addScene(RPGUIScene::class, RPGUIScene(context))
-                setScene<SelectionScene>()
-            }
+            loaded = true
         }
 
         onUpdate {
+            if (loaded && !init) {
+                init = true
+                KtScope.launch {
+                    addScene(SelectionScene::class, SelectionScene(::onSelection, context))
+                    addScene(PlatformerSampleScene::class, PlatformerSampleScene(context))
+                    addScene(RPGUIScene::class, RPGUIScene(context))
+                    setScene<SelectionScene>()
+                }
+            }
             if (input.isKeyPressed(Key.SHIFT_LEFT) && input.isKeyJustPressed(Key.BACKSPACE)) {
                 if (containsScene<SelectionScene>() && currentScene !is SelectionScene) {
                     KtScope.launch {
@@ -62,6 +68,8 @@ class SampleGame(context: Context) : Game<GameScene>(context) {
                 logger.info { stats }
             }
         }
+
+        onRelease { Assets.release() }
     }
 }
 
