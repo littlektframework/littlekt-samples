@@ -22,7 +22,7 @@ open class Entity(val gridCellSize: Int) {
     var cx: Int = 0
     var cy: Int = 0
     var xr: Float = 0.5f
-    var yr: Float = 1f
+    var yr: Float = 0f
 
     var gravityX: Float = 0f
     var gravityY: Float = 0f
@@ -37,7 +37,7 @@ open class Entity(val gridCellSize: Int) {
     var height: Float = gridCellSize.toFloat()
 
     var anchorX: Float = 0.5f
-    var anchorY: Float = 1f
+    var anchorY: Float = 0f
 
     val innerRadius get() = min(width, height) * 0.5
     val outerRadius get() = max(width, height) * 0.5
@@ -125,16 +125,19 @@ open class Entity(val gridCellSize: Int) {
     }
     var visible: Boolean = true
 
-    fun render(batch: SpriteBatch, shapeRenderer: ShapeRenderer) {
+    fun render(batch: SpriteBatch) {
         if (!visible) return
 
         batch.draw(
             sprite, px, py,
-            anchorX * sprite.originalWidth,
-            anchorY * sprite.originalHeight,
+           anchorX * sprite.originalWidth,
+           anchorY * sprite.originalHeight,
             scaleX = scaleX,
             scaleY = scaleY
         )
+    }
+
+    fun debugRender(shapeRenderer: ShapeRenderer) {
         shapeRenderer.rectangle(left, bottom, right - left, top - bottom)
         shapeRenderer.filledCircle(attachX, attachY, 1f, color = Color.GREEN)
     }

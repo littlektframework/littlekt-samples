@@ -13,7 +13,7 @@ open class LevelEntity(
 ) : Entity(gridCellSize) {
     var rightCollisionRatio: Float = 0.7f
     var leftCollisionRatio: Float = 0.3f
-    var bottomCollisionRatio: Float = 1f
+    var bottomCollisionRatio: Float = 0f
     var topCollisionRatio: Float = 1f
     var useTopCollisionRatio: Boolean = false
 
@@ -21,9 +21,9 @@ open class LevelEntity(
         cx = data.cx
         cy = level.levelHeight - 1 - data.cy
         xr = data.pivotX
-        yr = data.pivotY
+        yr = 1f - data.pivotY
         anchorX = data.pivotX
-        anchorY = data.pivotY
+        anchorY = 1f - data.pivotY
     }
 
     override fun checkXCollision() {

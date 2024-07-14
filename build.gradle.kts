@@ -1,6 +1,6 @@
-//import com.littlekt.gradle.texturepacker.littleKt
-//import com.littlekt.gradle.texturepacker.packing
-//import com.littlekt.gradle.texturepacker.texturePacker
+import com.littlekt.gradle.texturepacker.littleKt
+import com.littlekt.gradle.texturepacker.packing
+import com.littlekt.gradle.texturepacker.texturePacker
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
@@ -13,14 +13,14 @@ buildscript {
         maven(url ="https://s01.oss.sonatype.org/content/repositories/snapshots/")
     }
     dependencies {
-     //   classpath("com.littlekt.gradle:texturepacker:$littleKtVersion")
+        classpath("com.littlekt.gradle:texturepacker:$littleKtVersion")
     }
 }
 
 plugins {
     kotlin("multiplatform") version "2.0.0"
     kotlin("plugin.serialization") version "2.0.0"
- //   id("com.littlekt.gradle.texturepacker") version "0.10.0.b1264bb-SNAPSHOT"
+    id("com.littlekt.gradle.texturepacker") version "0.10.0.7be3cb0-SNAPSHOT"
 }
 
 group = "com.littlekt.samples"
@@ -34,16 +34,16 @@ repositories {
     maven(url = "https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
 }
 
-//littleKt {
-//    texturePacker {
-//        inputDir = "art/export_tiles/"
-//        outputDir = "src/commonMain/resources/"
-//        outputName = "tiles.atlas"
-//        packing {
-//            extrude = 2
-//        }
-//    }
-//}
+littleKt {
+    texturePacker {
+        inputDir = "art/export_tiles/"
+        outputDir = "src/commonMain/resources/"
+        outputName = "tiles.atlas"
+        packing {
+            extrude = 2
+        }
+    }
+}
 
 kotlin {
     tasks.withType<JavaExec> { jvmArgs("--enable-preview", "--enable-native-access=ALL-UNNAMED") }

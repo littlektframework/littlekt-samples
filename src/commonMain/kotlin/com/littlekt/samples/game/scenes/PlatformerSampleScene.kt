@@ -12,6 +12,7 @@ import com.littlekt.graphics.g2d.shape.ShapeRenderer
 import com.littlekt.graphics.g2d.tilemap.ldtk.LDtkEntity
 import com.littlekt.graphics.g2d.tilemap.ldtk.LDtkLevel
 import com.littlekt.graphics.g2d.tilemap.ldtk.LDtkWorld
+import com.littlekt.graphics.g2d.use
 import com.littlekt.graphics.webgpu.*
 import com.littlekt.input.Input
 import com.littlekt.input.Key
@@ -71,6 +72,7 @@ class PlatformerSampleScene(
     private val preferredFormat = context.graphics.preferredFormat
     private val batch = SpriteBatch(device, context.graphics, preferredFormat, cameraDynamicSize = 50)
     private val shapeRenderer = ShapeRenderer(batch)
+    private var debug = false
 
     override suspend fun Context.show() {
         if (!created) {
@@ -88,6 +90,10 @@ class PlatformerSampleScene(
                 }
                 entities.clear()
                 initLevel()
+            }
+
+            if (context.input.isKeyPressed(Key.SHIFT_LEFT) && context.input.isKeyJustPressed(Key.D)) {
+                debug = !debug
             }
 
             fx.update(dt, tmod)
@@ -144,40 +150,23 @@ class PlatformerSampleScene(
                 )
             camera.update(dt)
 
-            batch.begin(camera.viewProjection)
-            ldtkLevel.render(batch, camera)
-            fx.render(batch)
-            entities.fastForEach { entity ->
-                entity.render(batch, shapeRenderer)
+            batch.use(gameRenderPassEncoder, camera.viewProjection) {
+                ldtkLevel.render(batch, camera)
+                fx.render(batch)
+                entities.fastForEach { entity ->
+                    entity.render(batch)
+                }
+                if (debug) {
+                    entities.fastForEach { entity ->
+                        entity.debugRender(shapeRenderer)
+                    }
+                }
+
+                uiCam.update()
+                batch.viewProjection = uiCam.viewProjection
+                fontCache.draw(batch)
             }
-            hero.render(batch, shapeRenderer)
-            batch.flush(gameRenderPassEncoder)
-
             gameRenderPassEncoder.end()
-
-            val uiRenderPassEncoder =
-                commandEncoder.beginRenderPass(
-                    desc =
-                    RenderPassDescriptor(
-                        listOf(
-                            RenderPassColorAttachmentDescriptor(
-                                view = frame,
-                                loadOp = LoadOp.LOAD,
-                                storeOp = StoreOp.STORE,
-                                clearColor =
-                                if (preferredFormat.srgb) Color.DARK_GRAY.toLinear()
-                                else Color.DARK_GRAY
-                            )
-                        )
-                    )
-                )
-            uiCam.update()
-
-            batch.viewProjection = uiCam.viewProjection
-            fontCache.draw(batch)
-            batch.flush(uiRenderPassEncoder)
-            batch.end()
-            uiRenderPassEncoder.end()
 
             val commandBuffer = commandEncoder.finish()
 
@@ -186,7 +175,6 @@ class PlatformerSampleScene(
 
             commandBuffer.release()
             gameRenderPassEncoder.release()
-            uiRenderPassEncoder.release()
             commandEncoder.release()
             frame.release()
             swapChainTexture.release()
@@ -212,29 +200,37 @@ class PlatformerSampleScene(
 
     private fun initLevel() {
         hero.setFromLDtkEntity(ldtkLevel.entities("Player")[0])
-        entities += hero
         ldtkLevel.entities("Diamond").forEach { ldtkEntity ->
             entities += Diamond(ldtkEntity, sfxPickup, atlas, level, hero).also {
                 entities += it
                 it.onDestroy = ::removeEntity
             }
         }
+        entities += hero
         camera.viewBounds.width = ldtkLevel.pxWidth.toFloat()
         camera.viewBounds.height = ldtkLevel.pxHeight.toFloat()
         camera.follow(hero, true)
-        fontCache.setText("Diamonds left: ${Diamond.ALL.size}", 10f, 5f, scaleX = 2f, scaleY = 2f)
+        updateUi()
     }
 
     private fun removeEntity(entity: Entity) {
         entities.remove(entity)
-        if (entity is Diamond) {
-            fontCache.setText("Diamonds left: ${Diamond.ALL.size}", 10f, 5f, scaleX = 2f, scaleY = 2f)
-        }
+        updateUi()
+    }
+
+    private fun updateUi() {
+        fontCache.setText(
+            "Diamonds left: ${Diamond.ALL.size}",
+            10f,
+            uiCam.virtualHeight - 25f,
+            scaleX = 2f,
+            scaleY = 2f
+        )
         if (gameOver) {
             fontCache.setText(
                 "You Win!\nR to Restart",
                 uiCam.virtualWidth * 0.5f,
-                uiCam.virtualHeight * 0.5f - 30,
+                uiCam.virtualHeight * 0.5f,
                 scaleX = 2f,
                 scaleY = 2f,
                 align = HAlign.CENTER
@@ -244,7 +240,8 @@ class PlatformerSampleScene(
 
     override fun Context.resize(width: Int, height: Int) {
         gameViewport.update(width, height)
-        uiViewport.update(width, height)
+        uiViewport.update(width, height, true)
+        updateUi()
         graphics.configureSurface(
             TextureUsage.RENDER_ATTACHMENT,
             preferredFormat,
@@ -360,8 +357,6 @@ class Hero(
 
         run()
         jump()
-
-        println("$cx($xr), $cy($yr)")
     }
 
     override fun fixedUpdate() {
