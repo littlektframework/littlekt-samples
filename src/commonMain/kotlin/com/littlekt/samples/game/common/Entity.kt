@@ -130,8 +130,8 @@ open class Entity(val gridCellSize: Int) {
 
         batch.draw(
             sprite, px, py,
-           anchorX * sprite.originalWidth,
-           anchorY * sprite.originalHeight,
+           anchorX * sprite.actualWidth,
+           anchorY * sprite.actualHeight,
             scaleX = scaleX,
             scaleY = scaleY
         )
