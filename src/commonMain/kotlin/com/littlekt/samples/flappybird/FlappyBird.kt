@@ -14,6 +14,7 @@ import com.littlekt.graph.sceneGraph
 import com.littlekt.graphics.Color
 import com.littlekt.graphics.HAlign
 import com.littlekt.graphics.g2d.*
+import com.littlekt.graphics.g2d.shape.ShapeRenderer
 import com.littlekt.graphics.webgpu.*
 import com.littlekt.input.Key
 import com.littlekt.input.Pointer
@@ -58,12 +59,14 @@ class FlappyBird(context: Context) : ContextListener(context) {
         val device = graphics.device
         val preferredFormat = graphics.preferredFormat
         val batch = SpriteBatch(device, graphics, preferredFormat)
+        val shapeRenderer = ShapeRenderer(batch)
         val gameViewport = ExtendViewport(135, 256)
         val gameCamera = gameViewport.camera
         val viewBounds = Rect()
 
         val bird = Bird(atlas.getAnimation("bird"), 12f, 10f).apply {
             y = 256 / 2f
+            update(Duration.ZERO)
         }
 
         val backgrounds = List(7) {
@@ -97,6 +100,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
                 x = pipeOffset.toFloat() + pipeOffset * it
             }
         }
+        var debug = false
 
         fun reset() {
             started = false
@@ -365,6 +369,10 @@ class FlappyBird(context: Context) : ContextListener(context) {
                 handleStartMenu()
             }
 
+            if (context.input.isKeyPressed(Key.SHIFT_LEFT) && context.input.isKeyJustPressed(Key.D)) {
+                debug = !debug
+            }
+
             gameCamera.position.x = bird.x.roundToInt() + 20f
             gameCamera.update()
             viewBounds.calculateViewBounds(gameCamera)
@@ -421,6 +429,11 @@ class FlappyBird(context: Context) : ContextListener(context) {
                 groundTiles.forEach { it.render(batch) }
                 bird.render(batch)
                 pipes.forEach { it.render(batch) }
+                if (debug) {
+                    bird.debugRender(shapeRenderer)
+                    groundTiles.forEach { it.debugRender(shapeRenderer) }
+                    pipes.forEach { it.debugRender(shapeRenderer) }
+                }
             }
             gameRenderPassEncoder.end()
 
@@ -504,6 +517,10 @@ private class Bird(private val flapAnimation: Animation<TextureSlice>, var width
         batch.draw(sprite, x, y, sprite.width * 0.5f, sprite.height * 0.5f)
     }
 
+    fun debugRender(shapeRenderer: ShapeRenderer) {
+        shapeRenderer.rectangle(collider, color = Color.GREEN)
+    }
+
     fun flap() {
         velocity.y = flapHeight
     }
@@ -550,6 +567,10 @@ private class TexturedEnvironmentObject(val texture: TextureSlice, totalToWait: 
         batch.draw(texture, x, y)
     }
 
+    fun debugRender(shapeRenderer: ShapeRenderer) {
+        shapeRenderer.rectangle(x, y, texture.width.toFloat(), texture.height.toFloat(), color = Color.CYAN)
+    }
+
     override fun isColliding(rect: Rect): Boolean {
         return if (hasCollision) rect.intersects(
             x, y, x + texture.width.toFloat(), y + texture.height.toFloat()
@@ -588,45 +609,67 @@ private class Pipe(
             onViewBoundsReset()
         }
 
-        topPipeBodyRect.set(x, y - groundOffset + availableHeight, pipeBody.width.toFloat(), pipeTopHeight)
+        topPipeBodyRect.set(x, y + availableHeight - pipeTopHeight, pipeBody.width.toFloat(), pipeTopHeight)
         topPipeHeadRect.set(
             x,
-            y + availableHeight - groundOffset - pipeBottomHeight - pipeHead.height.toFloat(),
+            y + availableHeight - pipeTopHeight - pipeHead.height.toFloat(),
             pipeHead.width.toFloat(), pipeHead.height.toFloat()
         )
 
         bottomPipeBodyRect.set(
-            x, y, pipeBody.width.toFloat(), pipeBottomHeight
+            x, y + groundOffset, pipeBody.width.toFloat(), pipeBottomHeight
         )
         bottomPipeHeadRect.set(
             x,
-            y + pipeTopHeight,
+            y + groundOffset + pipeBottomHeight,
             pipeHead.width.toFloat(),
             pipeHead.height.toFloat()
         )
 
-        scoreRect.set(x + 5f, y + pipeTopHeight + pipeHead.height.toFloat(), 5f, pipeSeparationHeight.toFloat())
+        scoreRect.set(
+            x + 5f,
+            y + groundOffset + pipeBottomHeight + pipeHead.height.toFloat(),
+            5f,
+            pipeSeparationHeight.toFloat()
+        )
     }
 
     fun render(batch: Batch) {
         // draw top pipe
-        batch.draw(pipeBody, x, y + groundOffset + availableHeight, height = pipeTopHeight)
-        batch.draw(pipeHead, x, y + groundOffset  - pipeTopHeight, flipY = true)
+        batch.draw(pipeBody, x, y + availableHeight, originY = pipeTopHeight, height = pipeTopHeight)
+        batch.draw(
+            pipeHead,
+            x,
+            y + availableHeight - pipeTopHeight,
+            originY = pipeHead.actualHeight.toFloat(),
+            flipY = true
+        )
 
 //        // draw bottom pipe
-//        batch.draw(
-//            slice = pipeBody,
-//            x = x,
-//            y = y - groundOffset + availableHeight,
-//            originY = pipeBottomHeight,
-//            height = pipeBottomHeight
-//        )
-//        batch.draw(
-//            slice = pipeHead,
-//            x = x,
-//            y = y + availableHeight - groundOffset - pipeBottomHeight,
-//            originY = pipeHead.height.toFloat()
-//        )
+        batch.draw(
+            slice = pipeBody,
+            x = x,
+            y = y + groundOffset,
+            height = pipeBottomHeight
+        )
+        batch.draw(
+            slice = pipeHead,
+            x = x,
+            y = y + groundOffset + pipeBottomHeight,
+        )
+    }
+
+    fun debugRender(shapeRenderer: ShapeRenderer) {
+        shapeRenderer.color = Color.DARK_YELLOW
+        shapeRenderer.rectangle(topPipeBodyRect)
+        shapeRenderer.rectangle(topPipeHeadRect)
+
+        shapeRenderer.color = Color.DARK_RED
+        shapeRenderer.rectangle(bottomPipeBodyRect)
+        shapeRenderer.rectangle(bottomPipeHeadRect)
+
+        shapeRenderer.color = Color.LIGHT_GREEN
+        shapeRenderer.rectangle(scoreRect)
     }
 
     fun intersectingScore(rect: Rect) = !collected && scoreRect.intersects(rect)
