@@ -296,9 +296,9 @@ class FlappyBird(context: Context) : ContextListener(context) {
         }.also { it.initialize() }
 
         fun saveScore() {
-            best = vfs.loadString("best")?.toInt() ?: 0
+            best = kvStorage.loadString("best")?.toInt() ?: 0
             if (score > best) {
-                vfs.store("best", score.toString())
+                kvStorage.store("best", score.toString())
                 best = score
             }
         }

@@ -21,8 +21,8 @@ open class Game<SceneType : Scene>(context: Context, firstScene: SceneType? = nu
     val stats get() = context.stats
     val logger get() = context.logger
     val resourcesVfs get() = context.resourcesVfs
-    val storageVfs get() = context.storageVfs
-    val vfs get() = context.vfs
+    val kvStorage get() = context.kvStorage
+    val applicationVfs get() = context.applicationVfs
     val clipboard get() = context.clipboard
 
     /**
