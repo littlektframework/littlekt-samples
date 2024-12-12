@@ -2,6 +2,7 @@ import com.littlekt.gradle.texturepacker.littleKt
 import com.littlekt.gradle.texturepacker.packing
 import com.littlekt.gradle.texturepacker.texturePacker
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 buildscript {
@@ -18,9 +19,9 @@ buildscript {
 }
 
 plugins {
-    kotlin("multiplatform") version "2.0.0"
-    kotlin("plugin.serialization") version "2.0.0"
-    id("com.littlekt.gradle.texturepacker") version "0.10.0.7be3cb0-SNAPSHOT"
+    kotlin("multiplatform") version "2.1.0"
+    kotlin("plugin.serialization") version "2.1.0"
+    id("com.littlekt.gradle.texturepacker") version "0.10.2"
 }
 
 group = "com.littlekt.samples"
@@ -48,7 +49,7 @@ littleKt {
 kotlin {
     tasks.withType<JavaExec> { jvmArgs("--enable-preview", "--enable-native-access=ALL-UNNAMED") }
     jvm {
-        compilations.all { kotlinOptions.jvmTarget = "21" }
+        compilerOptions { jvmTarget = JvmTarget.JVM_21 }
         compilations {
             val main by getting
 
@@ -119,7 +120,7 @@ kotlin {
 
         this.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.js)
 
-        compilations.all { kotlinOptions.sourceMap = true }
+        compilerOptions { sourceMap = true }
     }
     val kotlinCoroutinesVersion: String by project
     val littleKtVersion: String by project
