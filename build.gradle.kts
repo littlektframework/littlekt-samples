@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 buildscript {
     val littleKtVersion: String by project
     repositories {
-        mavenLocal()
         google()
         mavenCentral()
         maven(url ="https://s01.oss.sonatype.org/content/repositories/snapshots/")
@@ -28,7 +27,6 @@ group = "com.littlekt.samples"
 version = "1.0"
 
 repositories {
-    mavenLocal()
     google()
     mavenCentral()
     maven(url ="https://s01.oss.sonatype.org/content/repositories/snapshots/")
