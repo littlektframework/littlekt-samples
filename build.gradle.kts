@@ -45,9 +45,9 @@ littleKt {
 }
 
 kotlin {
-    tasks.withType<JavaExec> { jvmArgs("--enable-preview", "--enable-native-access=ALL-UNNAMED") }
+    tasks.withType<JavaExec> { jvmArgs("--enable-native-access=ALL-UNNAMED") }
     jvm {
-        compilerOptions { jvmTarget = JvmTarget.JVM_21 }
+        compilerOptions { jvmTarget = JvmTarget.JVM_22 }
         compilations {
             val main by getting
 

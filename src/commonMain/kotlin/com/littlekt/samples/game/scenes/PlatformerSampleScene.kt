@@ -167,6 +167,7 @@ class PlatformerSampleScene(
                 fontCache.draw(batch)
             }
             gameRenderPassEncoder.end()
+            gameRenderPassEncoder.release()
 
             val commandBuffer = commandEncoder.finish()
 
@@ -174,7 +175,6 @@ class PlatformerSampleScene(
             context.graphics.surface.present()
 
             commandBuffer.release()
-            gameRenderPassEncoder.release()
             commandEncoder.release()
             frame.release()
             swapChainTexture.release()

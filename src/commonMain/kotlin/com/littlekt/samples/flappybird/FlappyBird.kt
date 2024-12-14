@@ -436,6 +436,7 @@ class FlappyBird(context: Context) : ContextListener(context) {
                 }
             }
             gameRenderPassEncoder.end()
+            gameRenderPassEncoder.release()
 
             val renderPassDescriptor = RenderPassDescriptor(
                 listOf(
@@ -457,7 +458,6 @@ class FlappyBird(context: Context) : ContextListener(context) {
             graphics.surface.present()
 
             commandBuffer.release()
-            gameRenderPassEncoder.release()
             commandEncoder.release()
             frame.release()
             swapChainTexture.release()
